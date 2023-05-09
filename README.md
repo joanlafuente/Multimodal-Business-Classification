@@ -21,8 +21,9 @@ python main.py
 
 
 ## Contributors
+Joan Lafuente Baeza, joan.lafuente@autonoma.cat
 Write here the name and UAB mail of the group members
 
 Xarxes Neuronals i Aprenentatge Profund
-Grau de __Write here the name of your estudies (Artificial Intelligence, Data Engineering or Computational Mathematics & Data analyitics)__, 
+Grau de Artificial Intelligence, 
 UAB, 2023
