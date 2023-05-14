@@ -98,8 +98,8 @@ def merge_data(imagesAndLabels, ocr_data):
     return data
 
 def make_dataframe(data_dir, anotation_path, train=True):
-    path_sets = data_dir + "/ImageSets/0"
-    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(path_sets)
+    sets_dir = data_dir + "/ImageSets/0"
+    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(sets_dir)
     ocr_data = pd.read_pickle(anotation_path)
     if train:
         train_data = load_images(train_img_names, y_train, data_dir)
