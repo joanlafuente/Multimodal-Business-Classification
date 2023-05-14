@@ -1,6 +1,7 @@
 [![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-718a45dd9cf7e7f842a935f5ebbe5719a5e09af4491e668f4dbf3b35d5cca122.svg)](https://classroom.github.com/online_ide?assignment_repo_id=11110454&assignment_repo_type=AssignmentRepo)
-# XNAP-Project title (replace it by the title of your project)
-Write here a short summary about your project. The text must include a short introduction and the targeted goals
+# Business classification
+Classify businesses on street view images, combining textual and visual features
+
 
 ## Code structure
 You must create as many folders as you consider. You can use the proposed structure or replace it by the one in the base code that you use as starting point. Do not forget to add Markdown files as needed to explain well the code and how to use it.
@@ -22,7 +23,7 @@ python main.py
 
 ## Contributors
 Joan Lafuente Baeza, joan.lafuente@autonoma.cat
-Write here the name and UAB mail of the group members
+Maria Pilligua Costa, maria.pilligua@autonoma.cat
 
 Xarxes Neuronals i Aprenentatge Profund
 Grau de Artificial Intelligence, 
