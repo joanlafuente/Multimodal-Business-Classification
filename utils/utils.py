@@ -66,11 +66,11 @@ def load_labels_and_split(path_sets, random_state=42):
     for key in images_class.keys():
         if "train" in key:
             for image in images_class[key]:
-                train_img_names.append(image)
+                train_img_names.append(image + ".jpg")
                 y_train.append(key.split("_")[0])
         elif "test" in key:
             for image in images_class[key]:
-                test_img_names.append(image)
+                test_img_names.append(image + ".jpg")
                 y_test.append(key.split("_")[0]) 
 
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.4, stratify=y_test, random_state=random_state)
@@ -81,16 +81,34 @@ def load_images(img_names, labels, data_dir):
 
     list_img = []
     for img_name in img_names:
-        img = Image.open(os.path.join(img_dir, img_name + ".jpg")) 
+        img = Image.open(os.path.join(img_dir, img_name)) 
         list_img.append(np.array(img))
 
     data = pd.DataFrame()
     data["img"] = list_img
     data["label"] = labels
     data["name"] = img_names
+    data.set_index("name", inplace=True)
+    data["label"] = data["label"].astype(int)
+
     return data
 
 def merge_data(imagesAndLabels, ocr_data):
     data = pd.concat([imagesAndLabels, ocr_data], axis=1, join="inner")
     return data
+
+def make_dataframe(data_dir, anotation_path, train=True):
+    path_sets = data_dir + "/ImageSets/0"
+    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(path_sets)
+    ocr_data = pd.read_pickle(anotation_path)
+    if train:
+        train_data = load_images(train_img_names, y_train, data_dir)
+        val_data = load_images(val_img_names, y_val, data_dir)
+        train_data = merge_data(train_data, ocr_data)
+        val_data = merge_data(val_data, ocr_data)
+        return train_data, val_data
+    else:
+        test_data = load_images(test_img_names, y_test, data_dir)
+        test_data = merge_data(test_data, ocr_data)
+        return test_data
     
