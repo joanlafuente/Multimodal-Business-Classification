@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../OneDrive - UAB/Documentos/2º de IA/NN and Deep Learning/Project/data"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}
