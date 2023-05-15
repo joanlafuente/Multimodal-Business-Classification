@@ -10,6 +10,7 @@ import os
 import numpy as np 
 from PIL import Image
 from models.models import *
+import gensim.downloader as api
 
 def get_data(slice=1, train=True):
     full_dataset = torchvision.datasets.MNIST(root=".",
@@ -47,7 +48,7 @@ def make(config, device="cuda"):
     
     return model, train_loader, test_loader, criterion, optimizer
 
-
+# It loads the labels of the images and split them into train, test and validation
 def load_labels_and_split(path_sets, random_state=42):
     list_sets = os.listdir(path_sets)
     images_class = {}
@@ -76,6 +77,8 @@ def load_labels_and_split(path_sets, random_state=42):
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.4, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
+
+# Loads the images and creates a dataframe with the correpondent labels
 def load_images(img_names, labels, data_dir):
     img_dir = data_dir + "JPEGImages"
 
@@ -93,13 +96,18 @@ def load_images(img_names, labels, data_dir):
 
     return data
 
+
+# Adds the columns of two dataframes
 def merge_data(imagesAndLabels, ocr_data):
     data = pd.concat([imagesAndLabels, ocr_data], axis=1, join="inner")
     return data
 
+
+# Call this function to get the dataframes of the data, if train is True, it will return the train and validation dataframes,
+#  if not, it will return the test dataframe
 def make_dataframe(data_dir, anotation_path, train=True):
-    path_sets = data_dir + "/ImageSets/0"
-    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(path_sets)
+    sets_dir = data_dir + "/ImageSets/0"
+    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(sets_dir)
     ocr_data = pd.read_pickle(anotation_path)
     if train:
         train_data = load_images(train_img_names, y_train, data_dir)
@@ -112,3 +120,34 @@ def make_dataframe(data_dir, anotation_path, train=True):
         test_data = merge_data(test_data, ocr_data)
         return test_data
     
+class Dataset_ConText(Dataset):
+    def __init__(self, data, transform=None):
+        self.data = data
+        self.transform = transform
+        self.w2v = api.load('glove-wiki-gigaword-300')
+        self.dim_w2v = 300
+        self.vocab = set(self.w2v.key_to_index.keys())
+        self.max_n_words = 20
+
+    def __len__(self):
+        return len(self.data.index)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img = self.data.iloc[idx, 0]
+        label = self.data.iloc[idx, 1]
+        words_OCR = self.data.iloc[idx, 2]
+
+        if self.transform:
+            img = self.transform(img)
+
+        words = np.zeros((self.max_n_words, self.dim_w2v))
+        i = 0
+        for word in list(set(words_OCR)):
+            if len(word) > 2:
+                if word.lower() in self.vocab:
+                    words[i,:] = self.w2v[word.lower()]
+                    i += 1
+        return (label-1), img, np.array(words)
