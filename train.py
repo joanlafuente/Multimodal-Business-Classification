@@ -10,10 +10,10 @@ def train(model, loader, criterion, optimizer, config):
     example_ct = 0  # number of examples seen
     batch_ct = 0
     for epoch in tqdm(range(config.epochs)):
-        for _, (images, labels) in enumerate(loader):
+        for _, (label, img, text) in enumerate(loader):
 
-            loss = train_batch(images, labels, model, optimizer, criterion)
-            example_ct +=  len(images)
+            loss = train_batch(img, text, label, model, optimizer, criterion)
+            example_ct +=  len(label)
             batch_ct += 1
 
             # Report metrics every 25th batch
@@ -21,11 +21,11 @@ def train(model, loader, criterion, optimizer, config):
                 train_log(loss, example_ct, epoch)
 
 
-def train_batch(images, labels, model, optimizer, criterion, device="cuda"):
-    images, labels = images.to(device), labels.to(device)
+def train_batch(img, text, labels, model, optimizer, criterion, device="cuda"):
+    img, text, labels = img.to(device), text.to(device), labels.to(device)
     
     # Forward pass ➡
-    outputs = model(images)
+    outputs = model(img, text)
     loss = criterion(outputs, labels)
     
     # Backward pass ⬅

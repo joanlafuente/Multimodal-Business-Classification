@@ -32,14 +32,14 @@ def make_loader(dataset, batch_size):
     return loader
 
 
-def make(config, device="cuda"):
+def make_prev(config, device="cuda"):
     # Make the data
     train, test = get_data(train=True), get_data(train=False)
     train_loader = make_loader(train, batch_size=config.batch_size)
     test_loader = make_loader(test, batch_size=config.batch_size)
 
     # Make the model
-    model = ConvNet(config.kernels, config.classes).to(device)
+    model = ConTextTransformer(config.classes).to(device)
 
     # Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
@@ -47,6 +47,70 @@ def make(config, device="cuda"):
         model.parameters(), lr=config.learning_rate)
     
     return model, train_loader, test_loader, criterion, optimizer
+
+
+
+def make(config, train=True, device="cuda"):
+    # Make the data and model
+    data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
+    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations.pkl"
+    input_size = 256
+    if train:
+        data_transforms_train = torchvision.transforms.Compose([
+            torchvision.transforms.RandomResizedCrop(input_size),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        train_df, val_df = make_dataframe(data_path, anotation_path, train=train)
+        train_dataset = Dataset_ConText(train_df, data_transforms_train)
+        train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2)
+        val_dataset = Dataset_ConText(val_df, data_transforms_train)
+        val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2)
+
+        # Make the model
+        model = ConTextTransformer(num_classes=config.classes, channels=3, dim=256, depth=2, heads=4, mlp_dim=512).to(device)
+
+        # Make the loss and optimizer
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=config.learning_rate)
+
+        return model, train_loader, val_loader, criterion, optimizer
+    else:
+        data_transforms_test = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(input_size),
+            torchvision.transforms.CenterCrop(input_size),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+        test_df = make_dataframe(data_path, anotation_path, train=train)
+        test_dataset = Dataset_ConText(test_df, data_transforms_train)
+        test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2)
+        return  test_loader
+
+def make2(config, train=True, device="cuda"):
+    # Make the data and model
+    data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
+    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations.pkl"
+    input_size = 256
+    data_transforms_train = torchvision.transforms.Compose([
+        torchvision.transforms.RandomResizedCrop(input_size),
+        torchvision.transforms.RandomHorizontalFlip(),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+
+    # Make the model
+    model = ConTextTransformer(num_classes=config.classes, channels=3, dim=256, depth=2, heads=4, mlp_dim=512).to(device)
+
+    # Make the loss and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config.learning_rate)
+
+    return model, criterion, optimizer, data_transforms_train
+    
 
 # It loads the labels of the images and split them into train, test and validation
 def load_labels_and_split(path_sets, random_state=42):
@@ -84,8 +148,8 @@ def load_images(img_names, labels, data_dir):
 
     list_img = []
     for img_name in img_names:
-        img = Image.open(os.path.join(img_dir, img_name)) 
-        list_img.append(np.array(img))
+        img = Image.open(os.path.join(img_dir, img_name)).convert('RGB')
+        list_img.append(torch.tensor(img, dtype=torch.ByteTensor))
 
     data = pd.DataFrame()
     data["img"] = list_img
@@ -114,40 +178,46 @@ def make_dataframe(data_dir, anotation_path, train=True):
         val_data = load_images(val_img_names, y_val, data_dir)
         train_data = merge_data(train_data, ocr_data)
         val_data = merge_data(val_data, ocr_data)
-        return train_data, val_data
+        return train_data.iloc[:int(len(train_data.index)/2), :], val_data
     else:
         test_data = load_images(test_img_names, y_test, data_dir)
         test_data = merge_data(test_data, ocr_data)
         return test_data
     
+
+    
 class Dataset_ConText(Dataset):
-    def __init__(self, data, transform=None):
-        self.data = data
+    def __init__(self, img_dir, img_list,labels_list, anotations, transform=None):
+        self.img_dir = img_dir
+        self.img_list = img_list
+        self.labels_list = labels_list
         self.transform = transform
+        self.anotations = anotations
         self.w2v = api.load('glove-wiki-gigaword-300')
         self.dim_w2v = 300
         self.vocab = set(self.w2v.key_to_index.keys())
         self.max_n_words = 20
 
     def __len__(self):
-        return len(self.data.index)
+        return len(self.img_list)
 
     def __getitem__(self, idx):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-        img = self.data.iloc[idx, 0]
-        label = self.data.iloc[idx, 1]
-        words_OCR = self.data.iloc[idx, 2]
+        img_name = self.img_list[idx]
+        img  = Image.open(os.path.join(self.img_dir, img_name)) 
+        label = self.labels_list[idx]
+        words_OCR = self.anotations[self.anotations.index == img_name].iloc[0]
 
         if self.transform:
             img = self.transform(img)
 
         words = np.zeros((self.max_n_words, self.dim_w2v))
         i = 0
-        for word in list(set(words_OCR)):
+        for word in list(set(words_OCR[0])):
             if len(word) > 2:
                 if (word.lower() in self.vocab) and (i < self.max_n_words):
                     words[i,:] = self.w2v[word.lower()]
                     i += 1
-        return (label-1), img, np.array(words)
+        return (int(label)-1), img, np.array(words)
