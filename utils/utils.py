@@ -149,7 +149,7 @@ def load_images(img_names, labels, data_dir):
     list_img = []
     for img_name in img_names:
         img = Image.open(os.path.join(img_dir, img_name)).convert('RGB')
-        list_img.append(torch.tensor(img, dtype=torch.ByteTensor))
+        list_img.append(torch.tensor(img, dtype=torch.ByteTensor).repeat(3, 1, 1))
 
     data = pd.DataFrame()
     data["img"] = list_img
@@ -206,7 +206,7 @@ class Dataset_ConText(Dataset):
             idx = idx.tolist()
 
         img_name = self.img_list[idx]
-        img  = Image.open(os.path.join(self.img_dir, img_name)) 
+        img  = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
         label = self.labels_list[idx]
         words_OCR = self.anotations[self.anotations.index == img_name].iloc[0]
 
