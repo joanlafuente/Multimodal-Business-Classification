@@ -37,14 +37,7 @@ def model_pipeline(cfg:dict) -> None:
       config = wandb.config
 
       # make the model, data, and optimization problem
-      model, criterion, optimizer, data_transforms_train = make2(config)
-      data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/ImageSets/0"
-      img_dir = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/JPEGImages"
-      anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations.pkl"
-      train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(data_path)
-      ocr_data = pd.read_pickle(anotation_path)
-      train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, transform=data_transforms_train)
-      train_loader = make_loader(train_dataset, config.batch_size)
+      model, criterion, optimizer, data_transforms_train, train_loader, test_loader, val_loader = make(config)
       # and use them to train the model
       train(model, train_loader, criterion, optimizer, config)
       

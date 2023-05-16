@@ -50,49 +50,13 @@ def make_prev(config, device="cuda"):
 
 
 
-def make(config, train=True, device="cuda"):
+
+def make(config, device="cuda"):
     # Make the data and model
     data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
-    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations.pkl"
-    input_size = 256
-    if train:
-        data_transforms_train = torchvision.transforms.Compose([
-            torchvision.transforms.RandomResizedCrop(input_size),
-            torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-        train_df, val_df = make_dataframe(data_path, anotation_path, train=train)
-        train_dataset = Dataset_ConText(train_df, data_transforms_train)
-        train_loader = DataLoader(train_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2)
-        val_dataset = Dataset_ConText(val_df, data_transforms_train)
-        val_loader = DataLoader(val_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2)
-
-        # Make the model
-        model = ConTextTransformer(num_classes=config.classes, channels=3, dim=256, depth=2, heads=4, mlp_dim=512).to(device)
-
-        # Make the loss and optimizer
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(
-            model.parameters(), lr=config.learning_rate)
-
-        return model, train_loader, val_loader, criterion, optimizer
-    else:
-        data_transforms_test = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(input_size),
-            torchvision.transforms.CenterCrop(input_size),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-        test_df = make_dataframe(data_path, anotation_path, train=train)
-        test_dataset = Dataset_ConText(test_df, data_transforms_train)
-        test_loader = DataLoader(test_dataset, batch_size=config.batch_size, shuffle=False, num_workers=2)
-        return  test_loader
-
-def make2(config, train=True, device="cuda"):
-    # Make the data and model
-    data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
-    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations.pkl"
+    img_dir = data_path + "JPEGImages"
+    txt_dir = data_path + "ImageSets/0"
+    anotation_path= "C:/Users/Joan/Desktop/Deep_Learning_project/dlnn-project_ia-group_15/anotations.pkl"
     input_size = 256
     data_transforms_train = torchvision.transforms.Compose([
         torchvision.transforms.RandomResizedCrop(input_size),
@@ -100,7 +64,27 @@ def make2(config, train=True, device="cuda"):
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
+    data_transforms_test = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(input_size),
+            torchvision.transforms.CenterCrop(input_size),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
 
+    ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
+    # Load the labels of the images and split them into train, test and validation
+    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
+    # Creating the datasets and the loaders for the train, test and validation
+    # Train
+    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, transform=data_transforms_train)
+    train_loader = make_loader(train_dataset, config.batch_size)
+    # Test
+    test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, transform=data_transforms_test)
+    test_loader = make_loader(test_dataset, config.batch_size)
+    # Validation
+    val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, ocr_data, transform=data_transforms_train)
+    val_loader = make_loader(val_dataset, config.batch_size)
+    
     # Make the model
     model = ConTextTransformer(num_classes=config.classes, channels=3, dim=256, depth=2, heads=4, mlp_dim=512).to(device)
 
@@ -109,7 +93,7 @@ def make2(config, train=True, device="cuda"):
     optimizer = torch.optim.Adam(
         model.parameters(), lr=config.learning_rate)
 
-    return model, criterion, optimizer, data_transforms_train
+    return model, criterion, optimizer, data_transforms_train, train_loader, test_loader, val_loader
     
 
 # It loads the labels of the images and split them into train, test and validation
@@ -141,50 +125,7 @@ def load_labels_and_split(path_sets, random_state=42):
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.4, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
-
-# Loads the images and creates a dataframe with the correpondent labels
-def load_images(img_names, labels, data_dir):
-    img_dir = data_dir + "JPEGImages"
-
-    list_img = []
-    for img_name in img_names:
-        img = Image.open(os.path.join(img_dir, img_name)).convert('RGB')
-        list_img.append(torch.tensor(img, dtype=torch.ByteTensor).repeat(3, 1, 1))
-
-    data = pd.DataFrame()
-    data["img"] = list_img
-    data["label"] = labels
-    data["name"] = img_names
-    data.set_index("name", inplace=True)
-    data["label"] = data["label"].astype(int)
-
-    return data
-
-
-# Adds the columns of two dataframes
-def merge_data(imagesAndLabels, ocr_data):
-    data = pd.concat([imagesAndLabels, ocr_data], axis=1, join="inner")
-    return data
-
-
-# Call this function to get the dataframes of the data, if train is True, it will return the train and validation dataframes,
-#  if not, it will return the test dataframe
-def make_dataframe(data_dir, anotation_path, train=True):
-    sets_dir = data_dir + "/ImageSets/0"
-    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(sets_dir)
-    ocr_data = pd.read_pickle(anotation_path)
-    if train:
-        train_data = load_images(train_img_names, y_train, data_dir)
-        val_data = load_images(val_img_names, y_val, data_dir)
-        train_data = merge_data(train_data, ocr_data)
-        val_data = merge_data(val_data, ocr_data)
-        return train_data.iloc[:int(len(train_data.index)/2), :], val_data
-    else:
-        test_data = load_images(test_img_names, y_test, data_dir)
-        test_data = merge_data(test_data, ocr_data)
-        return test_data
     
-
     
 class Dataset_ConText(Dataset):
     def __init__(self, img_dir, img_list,labels_list, anotations, transform=None):
