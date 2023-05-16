@@ -23,10 +23,6 @@ torch.cuda.manual_seed_all(hash("so runs are repeatable") % 2**32 - 1)
 # Device configuration
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-# remove slow mirror from list of MNIST mirrors
-torchvision.datasets.MNIST.mirrors = [mirror for mirror in torchvision.datasets.MNIST.mirrors
-                                      if not mirror.startswith("http://yann.lecun.com")]
-
 
 
 
@@ -39,11 +35,10 @@ def model_pipeline(cfg:dict) -> None:
       # make the model, data, and optimization problem
       model, criterion, optimizer, data_transforms_train, train_loader, test_loader, val_loader = make(config)
       # and use them to train the model
-      train(model, train_loader, criterion, optimizer, config)
+      train(model, train_loader, val_loader, criterion, optimizer, config)
       
       # and test its final performance
-      #test_loader = make(config, train=False)
-      #test(model, test_loader)
+      test(model, test_loader, save=False)
 
     return model
 
@@ -51,10 +46,10 @@ if __name__ == "__main__":
     wandb.login()
 
     config = dict(
-        epochs=1,
+        epochs=5,
         classes=28,
         batch_size=64,
-        learning_rate=5e-3,
+        learning_rate=0.0001,
         dataset="ConText",
         architecture="Transformer")
     model = model_pipeline(config)

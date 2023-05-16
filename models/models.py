@@ -63,7 +63,7 @@ class ConTextTransformer(nn.Module):
 
     def forward(self, img, txt, mask=None):
         x = self.resnet50(img)
-        x = rearrange(x, 'b d h w -> b (h w) d') # this makes a sequence of 64 videual features
+        x = rearrange(x, 'b d h w -> b (h w) d') # this makes a sequence of 64 visual features
         x = self.cnn_feature_to_embedding(x)
 
         cls_tokens = self.cls_token.expand(img.shape[0], -1, -1)

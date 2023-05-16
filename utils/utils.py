@@ -70,19 +70,20 @@ def make(config, device="cuda"):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
+    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     # Creating the datasets and the loaders for the train, test and validation
     # Train
-    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, transform=data_transforms_train)
+    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, w2v, transform=data_transforms_train)
     train_loader = make_loader(train_dataset, config.batch_size)
     # Test
-    test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, transform=data_transforms_test)
+    test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, w2v, transform=data_transforms_test)
     test_loader = make_loader(test_dataset, config.batch_size)
     # Validation
-    val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, ocr_data, transform=data_transforms_train)
+    val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, ocr_data, w2v, transform=data_transforms_test)
     val_loader = make_loader(val_dataset, config.batch_size)
     
     # Make the model
@@ -128,13 +129,13 @@ def load_labels_and_split(path_sets, random_state=42):
     
     
 class Dataset_ConText(Dataset):
-    def __init__(self, img_dir, img_list,labels_list, anotations, transform=None):
+    def __init__(self, img_dir, img_list,labels_list, anotations, embed, transform=None):
         self.img_dir = img_dir
         self.img_list = img_list
         self.labels_list = labels_list
         self.transform = transform
         self.anotations = anotations
-        self.w2v = api.load('glove-wiki-gigaword-300')
+        self.w2v = embed
         self.dim_w2v = 300
         self.vocab = set(self.w2v.key_to_index.keys())
         self.max_n_words = 20

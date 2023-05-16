@@ -5,9 +5,9 @@ def test(model, test_loader, device="cuda", save:bool= True):
     # Run the model on some test examples
     with torch.no_grad():
         correct, total = 0, 0
-        for images, labels in test_loader:
-            images, labels = images.to(device), labels.to(device)
-            outputs = model(images)
+        for labels, img, text in test_loader:
+            img, labels, text = img.to(device), labels.to(device), text.to(device)
+            outputs = model(img, text)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
@@ -18,10 +18,10 @@ def test(model, test_loader, device="cuda", save:bool= True):
         wandb.log({"test_accuracy": correct / total})
 
     if save:
-        print(len(images))
+        print(len(img))
         # Save the model in the exchangeable ONNX format
         torch.onnx.export(model,  # model being run
-                          images,  # model input (or a tuple for multiple inputs)
+                          img,  # model input (or a tuple for multiple inputs)
                           "model.onnx",  # where to save the model (can be a file or file-like object)
                           export_params=True,  # store the trained parameter weights inside the model file
                           opset_version=10,  # the ONNX version to export the model to
