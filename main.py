@@ -28,7 +28,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def model_pipeline(cfg:dict) -> None:
     # tell wandb to get started
-    with wandb.init(project="pytorch-tes1", config=cfg):
+    with wandb.init(project="Test_Transformer_Arquitecture", config=cfg):
       # access all HPs through wandb.config, so logging matches execution!
       config = wandb.config
 
@@ -46,10 +46,10 @@ if __name__ == "__main__":
     wandb.login()
 
     config = dict(
-        epochs=10,
+        epochs=25,
         classes=28,
-        batch_size=64,
-        batch_size_val_test=96,
+        batch_size=40,
+        batch_size_val_test=90,
         learning_rate=0.00005,
         patience=5,
         dataset="ConText",

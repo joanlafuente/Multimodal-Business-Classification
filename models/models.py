@@ -31,11 +31,11 @@ class ConTextTransformer(nn.Module):
         super().__init__()
 
         # Visual feature extractor
-        resnet50 = torchvision.models.resnet50(weights=True)
+        resnet50 = torchvision.models.resnet50(weights="DEFAULT")
         modules=list(resnet50.children())[:-2]
         self.resnet50=nn.Sequential(*modules)
         for param in self.resnet50.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
         self.num_cnn_features = 64  # 8x8
         self.dim_cnn_features = 2048
         self.dim_fasttext_features = 300
