@@ -46,10 +46,11 @@ if __name__ == "__main__":
     wandb.login()
 
     config = dict(
-        epochs=5,
+        epochs=1,
         classes=28,
         batch_size=64,
         learning_rate=0.0001,
+        patience=5,
         dataset="ConText",
         architecture="Transformer")
     model = model_pipeline(config)

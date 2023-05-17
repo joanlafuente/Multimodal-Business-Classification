@@ -10,6 +10,8 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
     total_batches = len(train_loader) * config.epochs
     example_ct = 0  # number of examples seen
     batch_ct = 0
+    best_val_loss = float('inf')
+    counter = 0
     for epoch in tqdm(range(config.epochs)):
         for label, img, text in train_loader:
             loss = train_batch(img, text, label, model, optimizer, criterion)
@@ -20,7 +22,18 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
             if ((batch_ct + 1) % 25) == 0:
                 train_log(loss, example_ct, epoch)
         # Evaluate the epoch results oi the validation set
-        val(model, val_loader, criterion, epoch)
+        val_loss = val(model, val_loader, criterion, epoch)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            counter = 0
+            torch.save(model.state_dict(), "best_model.pt")
+        else:
+            counter += 1 
+
+        if config.patience < counter:
+            break
+    model.load_state_dict(torch.load("best_model.pt"))
+    return model
 
         
 
@@ -61,7 +74,8 @@ def val(model, val_loader, criterion, epoch, device="cuda"):
         val_log(loss, correct / total, epoch)
         print(f"Accuracy of the model on the {total} " +
               f"val images: {correct / total:%}")
+        return loss.item()
 
 def val_log(loss, accuracy, epoch):
     # Where the magic happens
-    wandb.log({"epoch": epoch, "val_loss": loss, "val_acc":accuracy}, step=epoch)
+    wandb.log({"epoch": epoch, "val_loss": loss, "val_acc":accuracy})
