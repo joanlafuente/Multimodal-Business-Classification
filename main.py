@@ -46,11 +46,11 @@ if __name__ == "__main__":
     wandb.login()
 
     config = dict(
-        epochs=1,
+        epochs=10,
         classes=28,
         batch_size=64,
         batch_size_val_test=96,
-        learning_rate=0.0001,
+        learning_rate=0.00001,
         patience=5,
         dataset="ConText",
         architecture="Transformer")

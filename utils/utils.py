@@ -87,7 +87,7 @@ def make(config, device="cuda"):
     val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
     # Make the model
-    model = ConTextTransformer(num_classes=config.classes, channels=3, dim=256, depth=2, heads=4, mlp_dim=512).to(device)
+    model = ConTextTransformer(num_classes=config.classes, channels=3, dim=300, depth=3, heads=4, mlp_dim=400).to(device)
 
     # Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()

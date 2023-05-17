@@ -57,7 +57,9 @@ class ConTextTransformer(nn.Module):
         self.to_cls_token = nn.Identity()
         self.mlp_head = nn.Sequential(
             nn.Linear(dim, mlp_dim),
-            nn.GELU(),
+            nn.PReLU(),
+            nn.Linear(mlp_dim, mlp_dim),
+            nn.PReLU(),
             nn.Linear(mlp_dim, num_classes)
         )
 
