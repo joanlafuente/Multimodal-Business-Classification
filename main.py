@@ -50,7 +50,7 @@ if __name__ == "__main__":
         classes=28,
         batch_size=64,
         batch_size_val_test=96,
-        learning_rate=0.00001,
+        learning_rate=0.00005,
         patience=5,
         dataset="ConText",
         architecture="Transformer")
