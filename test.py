@@ -18,10 +18,9 @@ def test(model, test_loader, device="cuda", save:bool= True):
         wandb.log({"test_accuracy": correct / total})
 
     if save:
-        print(len(img))
         # Save the model in the exchangeable ONNX format
         torch.onnx.export(model,  # model being run
-                          img,  # model input (or a tuple for multiple inputs)
+                          (img, text),  # model input (or a tuple for multiple inputs)
                           "model.onnx",  # where to save the model (can be a file or file-like object)
                           export_params=True,  # store the trained parameter weights inside the model file
                           opset_version=10,  # the ONNX version to export the model to
