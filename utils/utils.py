@@ -81,10 +81,10 @@ def make(config, device="cuda"):
     train_loader = make_loader(train_dataset, config.batch_size)
     # Test
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, w2v, transform=data_transforms_test)
-    test_loader = make_loader(test_dataset, config.batch_size)
+    test_loader = make_loader(test_dataset, config.batch_size_val_test)
     # Validation
     val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, ocr_data, w2v, transform=data_transforms_test)
-    val_loader = make_loader(val_dataset, config.batch_size)
+    val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
     # Make the model
     model = ConTextTransformer(num_classes=config.classes, channels=3, dim=256, depth=2, heads=4, mlp_dim=512).to(device)
@@ -94,7 +94,7 @@ def make(config, device="cuda"):
     optimizer = torch.optim.Adam(
         model.parameters(), lr=config.learning_rate)
 
-    return model, criterion, optimizer, data_transforms_train, train_loader, test_loader, val_loader
+    return model, criterion, optimizer, train_loader, test_loader, val_loader
     
 
 # It loads the labels of the images and split them into train, test and validation
@@ -138,7 +138,7 @@ class Dataset_ConText(Dataset):
         self.w2v = embed
         self.dim_w2v = 300
         self.vocab = set(self.w2v.key_to_index.keys())
-        self.max_n_words = 20
+        self.max_n_words = 40
 
     def __len__(self):
         return len(self.img_list)
