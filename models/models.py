@@ -108,10 +108,9 @@ class Transformer(nn.Module):
 
         # Classification fc
         self.fc = nn.Sequential(
-            nn.Linear(self.dim, 256),
-            nn.Dropout(0.3),
-            nn.ReLU(),
-            nn.Linear(256, num_classes)
+            nn.Linear(self.dim, self.dim_fc_transformer),
+            nn.GELU(),
+            nn.Linear(self.dim_fc_transformer, num_classes)
         )
 
     def forward(self, img, txt):
