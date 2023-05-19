@@ -161,6 +161,6 @@ class Dataset_ConText(Dataset):
         for word in list(set(words_OCR[0])):
             if len(word) > 2:
                 if (word.lower() in self.vocab) and (i < self.max_n_words):
-                    words[i,:] = self.w2v[word.lower()]
+                    # words[i,:] = self.w2v[word.lower()]
                     i += 1
         return (int(label)-1), img, np.array(words)
