@@ -87,7 +87,7 @@ class Transformer(nn.Module):
         modules=list(full_cnn.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
-            param.requires_grad = False
+            param.requires_grad = True
         self.dim_features_feature_extractor = 768
         self.n_features_feature_extractor = 49 # 7x7
         self.dim_text_features = 300
