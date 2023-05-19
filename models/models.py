@@ -2,7 +2,6 @@ import torch.nn as nn
 import torchvision
 import torch
 from einops import rearrange
-
 # Conventional and convolutional neural network
 
 class ConvNet(nn.Module):
@@ -31,7 +30,7 @@ class ConTextTransformer(nn.Module):
         super().__init__()
 
         # Visual feature extractor
-        resnet50 = torchvision.models.resnet50(weights="DEFAULT")
+        resnet50 = torchvision.models.resnet50(pretrained = True)
         modules=list(resnet50.children())[:-2]
         self.resnet50=nn.Sequential(*modules)
         for param in self.resnet50.parameters():
