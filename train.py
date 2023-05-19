@@ -12,7 +12,7 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
     batch_ct = 0
     best_val_loss = float('inf')
     counter = 0
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[15,30], gamma=0.1)    
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     for epoch in tqdm(range(config.epochs)):
         for label, img, text in train_loader:
             loss = train_batch(img, text, label, model, optimizer, criterion)
@@ -27,14 +27,14 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), "best_model.pt")
+            torch.save(model.state_dict(), "best_model_transformer.pt")
         else:
             counter += 1 
 
         if config.patience < counter:
             break
-        scheduler.step()
-    model.load_state_dict(torch.load("best_model.pt"))
+        scheduler.step(val_loss)
+    model.load_state_dict(torch.load("best_model_transformer.pt"))
     return model
 
         

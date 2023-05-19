@@ -57,15 +57,16 @@ def make(config, device="cuda"):
     img_dir = data_path + "JPEGImages"
     txt_dir = data_path + "ImageSets/0"
     anotation_path= "C:/Users/Joan/Desktop/Deep_Learning_project/dlnn-project_ia-group_15/anotations.pkl"
-    input_size = 256
+    input_size = 224
     data_transforms_train = torchvision.transforms.Compose([
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
         torchvision.transforms.RandomResizedCrop(input_size),
         torchvision.transforms.RandomHorizontalFlip(),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     data_transforms_test = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(input_size),
+            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
             torchvision.transforms.CenterCrop(input_size),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
@@ -87,7 +88,7 @@ def make(config, device="cuda"):
     val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
     # Make the model
-    model = ConTextTransformer(num_classes=config.classes, channels=3, dim=300, depth=4, heads=5, mlp_dim=400).to(device)
+    model = Transformer(num_classes=config.classes, depth_transformer=3, heads_transformer=5, dim_fc_transformer=300).to(device)
 
     # Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
