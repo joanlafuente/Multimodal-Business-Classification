@@ -34,7 +34,7 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         if config.patience < counter:
             break
         scheduler.step(val_loss)
-    model.load_state_dict(torch.load("best_model_transformer_grey_scale_txt.pt"))
+    model.load_state_dict(torch.load("best_model_transformer.pt"))
     return model
 
         
