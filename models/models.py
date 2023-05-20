@@ -83,7 +83,9 @@ class Transformer(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
         super(Transformer, self).__init__()
 
-        full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")   
+        # the next line is to load the pretrained model
+        # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+        full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")   
         modules=list(full_cnn.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():

@@ -28,7 +28,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def model_pipeline(cfg:dict) -> None:
     # tell wandb to get started
-    with wandb.init(project="Test_Transformer_Arquitecture", config=cfg):
+    with wandb.init(project="business_recognition", config=cfg):
       # access all HPs through wandb.config, so logging matches execution!
       config = wandb.config
 
