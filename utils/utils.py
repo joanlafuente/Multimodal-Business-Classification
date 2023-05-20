@@ -12,6 +12,12 @@ from PIL import Image
 from models.models import *
 import gensim.downloader as api
 
+data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
+anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
+
+
 def get_data(slice=1, train=True):
     full_dataset = torchvision.datasets.MNIST(root=".",
                                               train=train, 
@@ -34,10 +40,7 @@ def make_loader(dataset, batch_size):
 
 def make(config, device="cuda"):
     # Make the data and model
-    data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
-    img_dir = data_path + "JPEGImages"
-    txt_dir = data_path + "ImageSets/0"
-    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+    global data_path, anotation_path, img_dir, txt_dir
     input_size = 224
     
     data_transforms_train = torchvision.transforms.Compose([
@@ -82,10 +85,7 @@ def make(config, device="cuda"):
     
 def make_test(config, device="cuda"):
     # Make the data and model
-    data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
-    img_dir = data_path + "JPEGImages"
-    txt_dir = data_path + "ImageSets/0"
-    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+    global data_path, anotation_path, img_dir, txt_dir
     input_size = 224
     
     data_transforms_train = torchvision.transforms.Compose([
