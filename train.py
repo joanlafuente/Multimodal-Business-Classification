@@ -3,6 +3,7 @@ import torch
 import wandb
 
 def train(model, train_loader, val_loader, criterion, optimizer, config):
+    model.train()
     # Tell wandb to watch what the model gets up to: gradients, weights, and more!
     wandb.watch(model, criterion, log="all", log_freq=10)
 
