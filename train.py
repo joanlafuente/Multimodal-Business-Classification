@@ -27,14 +27,14 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), "best_model_transformer.pt")
+            torch.save(model.state_dict(), "best_model_transformer_keras.pt")
         else:
             counter += 1 
 
         if config.patience < counter:
             break
         scheduler.step(val_loss)
-    model.load_state_dict(torch.load("best_model_transformer.pt"))
+    model.load_state_dict(torch.load("best_model_transformer_keras.pt"))
     return model
 
         

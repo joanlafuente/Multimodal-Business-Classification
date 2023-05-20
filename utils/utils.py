@@ -37,7 +37,7 @@ def make(config, device="cuda"):
     data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
     img_dir = data_path + "JPEGImages"
     txt_dir = data_path + "ImageSets/0"
-    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_greyscale.pkl"
+    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
     input_size = 224
     
     data_transforms_train = torchvision.transforms.Compose([
