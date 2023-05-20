@@ -12,6 +12,7 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
     example_ct = 0  # number of examples seen
     batch_ct = 0
     best_val_loss = float('inf')
+    best_val_acc = 0
     counter = 0
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     for epoch in tqdm(range(config.epochs)):
@@ -24,13 +25,16 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
             if ((batch_ct + 1) % 25) == 0:
                 train_log(loss, example_ct, epoch)
         # Evaluate the epoch results oi the validation set
-        val_loss = val(model, val_loader, criterion, epoch)
+        val_loss, val_acc = val(model, val_loader, criterion, epoch)
         if val_loss < best_val_loss:
-            best_val_loss = val_loss
             counter = 0
-            torch.save(model.state_dict(), "best_model_transformer_keras.pt")
         else:
             counter += 1 
+
+        # save the model if the validation accuracy is the best we've seen so far
+        if val_acc > best_val_acc:
+            best_val_acc = val_acc
+            torch.save(model.state_dict(), "best_model_transformer_keras.pt")
 
         if config.patience < counter:
             break
@@ -77,7 +81,7 @@ def val(model, val_loader, criterion, epoch, device="cuda"):
         val_log(loss, correct / total, epoch)
         print(f"Accuracy of the model on the {total} " +
               f"val images: {correct / total:%}")
-        return loss.item()
+        return loss.item(), correct / total
 
 def val_log(loss, accuracy, epoch):
     # Where the magic happens
