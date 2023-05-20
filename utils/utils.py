@@ -80,6 +80,50 @@ def make(config, device="cuda"):
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
     
+def make_test(config, device="cuda"):
+    # Make the data and model
+    data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
+    img_dir = data_path + "JPEGImages"
+    txt_dir = data_path + "ImageSets/0"
+    anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+    input_size = 224
+    
+    data_transforms_train = torchvision.transforms.Compose([
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+        torchvision.transforms.RandomResizedCrop(input_size),
+        torchvision.transforms.RandomHorizontalFlip(),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    
+    data_transforms_test = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+            torchvision.transforms.CenterCrop(input_size),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
+    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+
+    ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
+    # Load the labels of the images and split them into train, test and validation
+    train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
+    # Creating the datasets and the loaders for the train, test and validation
+    # Train
+    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, w2v, transform=data_transforms_train)
+    train_loader = make_loader(train_dataset, config["batch_size"])
+    # Test
+    test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, w2v, transform=data_transforms_test)
+    test_loader = make_loader(test_dataset, config["batch_size_val_test"])
+    # Validation
+    val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, ocr_data, w2v, transform=data_transforms_test)
+    val_loader = make_loader(val_dataset, config["batch_size_val_test"])
+    
+    # Make the model
+    model = Transformer(num_classes=config["classes"], depth_transformer=3, heads_transformer=5, dim_fc_transformer=300).to(device)
+
+    return model, train_loader, test_loader, val_loader
+    
+
 
 # It loads the labels of the images and split them into train, test and validation
 def load_labels_and_split(path_sets, random_state=42):
