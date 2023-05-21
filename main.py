@@ -53,6 +53,8 @@ if __name__ == "__main__":
         learning_rate=0.00005,
         patience=10,
         dataset="ConText",
-        architecture="Transformer")
+        architecture="Transformer",
+        cnn = "RegNet_Y_16GF",
+        weights = "IMAGENET1K_V2")
     model = model_pipeline(config)
 

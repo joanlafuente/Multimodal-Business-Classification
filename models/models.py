@@ -84,13 +84,14 @@ class Transformer(nn.Module):
 
         # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
         # full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
-        full_cnn  = torchvision.models.RegNet_Y_16GF_Weights(weights='IMAGENET1K_V1')
+        weights = torchvision.models.RegNet_Y_16GF_Weights.IMAGENET1K_V2
+        full_cnn  = torchvision.models.regnet_y_16gf(weights=weights) # output 3024
         # full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
         modules=list(full_cnn.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
-        self.dim_features_feature_extractor = 1280
+        self.dim_features_feature_extractor = 1280 
         self.n_features_feature_extractor = 49 # 7x7
         self.dim_text_features = 300
         # Dimension in which the images and text are embedded
