@@ -1,7 +1,6 @@
 import torch.nn as nn
 import torchvision
 import torch
-from einops import rearrange
 # Conventional and convolutional neural network
 
 class ConvNet(nn.Module):
@@ -85,8 +84,8 @@ class Transformer(nn.Module):
 
         # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
         # full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
-        # full_cnn  = torchvision.models.RegNet_Y_16GF_Weights(weights='IMAGENET1K_V1')
-        full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
+        full_cnn  = torchvision.models.RegNet_Y_16GF_Weights(weights='IMAGENET1K_V1')
+        # full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
         modules=list(full_cnn.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
@@ -119,9 +118,13 @@ class Transformer(nn.Module):
     def forward(self, img, txt):
         batch_size = img.shape[0]
 
+        print()
         image_features = self.feature_extractor(img)
+        print(image_features.shape)
         image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
+        print(image_features.shape)
         image_features = self.cnn_features_embed(image_features) 
+        print(image_features.shape)
 
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
         x = torch.cat((cls_tokens, image_features), dim=1)
