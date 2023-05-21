@@ -16,8 +16,8 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
     counter = 0
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     for epoch in tqdm(range(config.epochs)):
-        for label, img, text in train_loader:
-            loss = train_batch(img, text, label, model, optimizer, criterion)
+        for label, img, text, text_mask in train_loader:
+            loss = train_batch(img, text, text_mask, label, model, optimizer, criterion)
             example_ct +=  len(label)
             batch_ct += 1
 
@@ -45,11 +45,11 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         
 
 
-def train_batch(img, text, labels, model, optimizer, criterion, device="cuda"):
-    img, text, labels = img.to(device), text.to(device), labels.to(device)
+def train_batch(img, text, text_mask, labels, model, optimizer, criterion, device="cuda"):
+    img, text, text_mask, labels = img.to(device), text.to(device), text_mask.to(device), labels.to(device)
     
     # Forward pass ➡
-    outputs = model(img, text)
+    outputs = model(img, text, text_mask)
     loss = criterion(outputs, labels)
     
     # Backward pass ⬅
@@ -68,11 +68,12 @@ def train_log(loss, example_ct, epoch):
     print(f"Loss after {str(example_ct).zfill(5)} examples: {loss:.3f}")
 
 def val(model, val_loader, criterion, epoch, device="cuda"):
+    model.train()
     with torch.no_grad():
         correct, total = 0, 0
-        for labels, img, text in val_loader:
-            img, labels, text = img.to(device), labels.to(device), text.to(device)
-            outputs = model(img, text)
+        for labels, img, text, text_mask in val_loader:
+            img, labels, text, text_mask = img.to(device), labels.to(device), text.to(device), text_mask.to(device)
+            outputs = model(img, text, text_mask)
             loss = criterion(outputs, labels)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)

@@ -184,10 +184,12 @@ class Dataset_ConText(Dataset):
             img = self.transform(img)
 
         words = np.zeros((self.max_n_words, self.dim_w2v))
+        text_mask = np.ones((self.max_n_words,), dtype=bool)
         i = 0
         for word in list(set(words_OCR[0])):
             if len(word) > 2:
                 if (word.lower() in self.vocab) and (i < self.max_n_words):
                     words[i,:] = self.w2v[word.lower()]
+                    text_mask[i] = False
                     i += 1
-        return (int(label)-1), img, np.array(words)
+        return (int(label)-1), img, np.array(words), text_mask

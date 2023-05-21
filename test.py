@@ -3,12 +3,12 @@ import torch
 
 def test(model, test_loader, device="cuda", save:bool= True):
     # Run the model on some test examples
-    model.eval()
+    model.train()
     with torch.no_grad():
         correct, total = 0, 0
-        for labels, img, text in test_loader:
-            img, labels, text = img.to(device), labels.to(device), text.to(device)
-            outputs = model(img, text)
+        for labels, img, text,text_mask in test_loader:
+            img, labels, text, text_mask = img.to(device), labels.to(device), text.to(device), text_mask.to(device)
+            outputs = model(img, text, text_mask)
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()

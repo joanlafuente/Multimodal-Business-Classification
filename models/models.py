@@ -1,6 +1,7 @@
 import torch.nn as nn
 import torchvision
 import torch
+from einops import rearrange
 # Conventional and convolutional neural network
 
 class ConvNet(nn.Module):
@@ -82,18 +83,19 @@ class Transformer(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
         super(Transformer, self).__init__()
 
-        # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+        full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
         # full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
-        weights = torchvision.models.RegNet_Y_16GF_Weights.IMAGENET1K_V2
-        full_cnn  = torchvision.models.regnet_y_16gf(weights=weights) # output 3024
+        # weights = torchvision.models.RegNet_Y_16GF_Weights.IMAGENET1K_V2
+        # full_cnn  = torchvision.models.regnet_y_16gf(weights=weights) # output 3024
         # full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
         modules=list(full_cnn.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
-        self.dim_features_feature_extractor = 1280 
+        self.dim_features_feature_extractor = 768 
         self.n_features_feature_extractor = 49 # 7x7
         self.dim_text_features = 300
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # Dimension in which the images and text are embedded
         self.dim = 350
 
@@ -116,16 +118,12 @@ class Transformer(nn.Module):
             nn.Linear(dim_fc_transformer, num_classes)
         )
 
-    def forward(self, img, txt):
+    def forward(self, img, txt, text_mask):
         batch_size = img.shape[0]
 
-        print()
         image_features = self.feature_extractor(img)
-        print(image_features.shape)
         image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
-        print(image_features.shape)
         image_features = self.cnn_features_embed(image_features) 
-        print(image_features.shape)
 
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
         x = torch.cat((cls_tokens, image_features), dim=1)
@@ -133,7 +131,10 @@ class Transformer(nn.Module):
 
         text_features = self.text_features_embed(txt.float())
         x = torch.cat((x, text_features), dim=1)
-        x = self.transformer(x)
+
+        tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
+        mask = torch.cat((tmp_mask, text_mask), dim=1)
+        x = self.transformer(x, src_key_padding_mask=mask)
 
         x = x[:, 0]
         x = self.fc(x)

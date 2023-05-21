@@ -48,13 +48,13 @@ if __name__ == "__main__":
     config = dict(
         epochs=35,
         classes=28,
-        batch_size=12,
-        batch_size_val_test=20,
+        batch_size=16,
+        batch_size_val_test=25,
         learning_rate=0.00005,
         patience=10,
         dataset="ConText",
         architecture="Transformer",
-        cnn = "RegNet_Y_16GF",
-        weights = "IMAGENET1K_V2")
+        cnn = "convnext_tiny",
+        weights = "DEFAULT")
     model = model_pipeline(config)
 
