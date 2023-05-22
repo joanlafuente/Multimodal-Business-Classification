@@ -26,15 +26,17 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
                 train_log(loss, example_ct, epoch)
         # Evaluate the epoch results oi the validation set
         val_loss, val_acc = val(model, val_loader, criterion, epoch)
-        if val_loss < best_val_loss:
-            counter = 0
-        else:
-            counter += 1 
+        counter += 1
+        # if val_loss < best_val_loss:
+        #     counter = 0
+        # else:
+        #     counter += 1 
 
         # save the model if the validation accuracy is the best we've seen so far
         if val_acc > best_val_acc:
             best_val_acc = val_acc
             torch.save(model.state_dict(), "best_model_transformer_keras.pt")
+            counter = 0
 
         if config.patience < counter:
             break
