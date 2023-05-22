@@ -3,7 +3,7 @@ import torch
 
 def test(model, test_loader, device="cuda", save:bool= True):
     # Run the model on some test examples
-    model.train()
+    model.eval()
     with torch.no_grad():
         correct, total = 0, 0
         for labels, img, text,text_mask in test_loader:

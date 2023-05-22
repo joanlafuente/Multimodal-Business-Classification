@@ -132,10 +132,11 @@ class Transformer(nn.Module):
         text_features = self.text_features_embed(txt.float())
         x = torch.cat((x, text_features), dim=1)
 
-        tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
-        mask = torch.cat((tmp_mask, text_mask), dim=1)
-        x = self.transformer(x, src_key_padding_mask=mask)
-
+        # tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
+        # mask = torch.cat((tmp_mask, text_mask), dim=1)
+        # x = self.transformer(x, src_key_padding_mask=mask)
+        x = self.transformer(x)
+        
         x = x[:, 0]
         x = self.fc(x)
         return x

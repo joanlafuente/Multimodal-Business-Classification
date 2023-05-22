@@ -68,7 +68,7 @@ def train_log(loss, example_ct, epoch):
     print(f"Loss after {str(example_ct).zfill(5)} examples: {loss:.3f}")
 
 def val(model, val_loader, criterion, epoch, device="cuda"):
-    model.train()
+    model.eval()
     with torch.no_grad():
         correct, total = 0, 0
         for labels, img, text, text_mask in val_loader:
