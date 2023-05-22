@@ -21,7 +21,7 @@ def test(model, test_loader, device="cuda", save:bool= True):
     if save:
         # Save the model in the exchangeable ONNX format
         torch.onnx.export(model,  # model being run
-                          (img, text),  # model input (or a tuple for multiple inputs)
+                          (img, text, text_mask),  # model input (or a tuple for multiple inputs)
                           "model.onnx",  # where to save the model (can be a file or file-like object)
                           export_params=True,  # store the trained parameter weights inside the model file
                           opset_version=10,  # the ONNX version to export the model to
