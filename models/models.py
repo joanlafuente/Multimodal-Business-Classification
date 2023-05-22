@@ -97,7 +97,7 @@ class Transformer(nn.Module):
         self.dim_text_features = 300
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # Dimension in which the images and text are embedded
-        self.dim = 350
+        self.dim = 360
 
         # Embed for the text and image features
         self.cnn_features_embed = nn.Linear(self.n_features_feature_extractor, self.dim)
@@ -136,7 +136,7 @@ class Transformer(nn.Module):
         # mask = torch.cat((tmp_mask, text_mask), dim=1)
         # x = self.transformer(x, src_key_padding_mask=mask)
         x = self.transformer(x)
-        
+
         x = x[:, 0]
         x = self.fc(x)
         return x
