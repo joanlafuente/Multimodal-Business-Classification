@@ -12,13 +12,15 @@ from PIL import Image
 from models.models import *
 import gensim.downloader as api
 
-data_path = "/content/"
-anotation_path= "/content/"
-data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
-anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+data_path = "/content/dlnn-project_ia-group_15/data/"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
 
-img_dir = data_path + r"\JPEGImages"
-txt_dir = data_path + r"\ImageSets\0"
+# data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
+# anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+# img_dir = data_path + r"\JPEGImages"
+# txt_dir = data_path + r"\ImageSets\0"
 
 
 def get_data(slice=1, train=True):
