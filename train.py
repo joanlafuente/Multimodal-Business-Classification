@@ -23,7 +23,7 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
 
             # Report metrics every 25th batch
             if ((batch_ct + 1) % 25) == 0:
-                train_log(loss/len(labels), example_ct, epoch)
+                train_log(loss/labels.size(0), example_ct, epoch)
         # Evaluate the epoch results oi the validation set
         val_loss, val_acc = val(model, val_loader, criterion, epoch)
         counter += 1
@@ -35,13 +35,13 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         # save the model if the validation accuracy is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model.state_dict(), "best_model_mask.pt")
+            torch.save(model.state_dict(), "best_model_complex_mask.pt")
             counter = 0
 
         if config.patience < counter:
             break
         scheduler.step(val_loss)
-    model.load_state_dict(torch.load("best_model_mask.pt"))
+    model.load_state_dict(torch.load("best_model_complex_mask.pt"))
     return model
 
         
