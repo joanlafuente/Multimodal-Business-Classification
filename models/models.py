@@ -83,8 +83,8 @@ class Transformer(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
         super(Transformer, self).__init__()
 
-        # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
-        full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
+        full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+        # full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
         # weights = torchvision.models.RegNet_Y_16GF_Weights.IMAGENET1K_V2
         # full_cnn  = torchvision.models.regnet_y_16gf(weights=weights) # output 3024
         # full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
@@ -132,10 +132,10 @@ class Transformer(nn.Module):
         text_features = self.text_features_embed(txt.float())
         x = torch.cat((x, text_features), dim=1)
 
-        # tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
-        # mask = torch.cat((tmp_mask, text_mask), dim=1)
-        # x = self.transformer(x, src_key_padding_mask=mask)
-        x = self.transformer(x)
+        tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
+        mask = torch.cat((tmp_mask, text_mask), dim=1)
+        x = self.transformer(x, src_key_padding_mask=mask)
+        # x = self.transformer(x)
 
         x = x[:, 0]
         x = self.fc(x)
