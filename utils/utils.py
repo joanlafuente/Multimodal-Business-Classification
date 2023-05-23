@@ -137,21 +137,15 @@ def load_labels_and_split(path_sets, random_state=42):
                 file_text = file.read().splitlines()
             images_class[set_filename] = [row.split()[0] for row in file_text if row.split()[1] == "1"]
     
-    train_img_names = []
-    y_train = []
-    test_img_names = []
-    y_test = []
+    all_img_names = []
+    all_y = []
     for key in images_class.keys():
-        if "train" in key:
-            for image in images_class[key]:
-                train_img_names.append(image + ".jpg")
-                y_train.append(key.split("_")[0])
-        elif "test" in key:
-            for image in images_class[key]:
-                test_img_names.append(image + ".jpg")
-                y_test.append(key.split("_")[0]) 
+        for image in images_class[key]:
+            all_img_names.append(image + ".jpg")
+            all_y.append(key.split("_")[0])
 
-    test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.4, stratify=y_test, random_state=random_state)
+    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.4, stratify=all_y, random_state=random_state)
+    test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
     
