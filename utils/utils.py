@@ -12,8 +12,8 @@ from PIL import Image
 from models.models import *
 import gensim.downloader as api
 
-data_path = "C:/Users/Joan/Desktop/Deep_Learning_project/features/data/"
-anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+data_path = "/content/"
+anotation_path= "/content/"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
