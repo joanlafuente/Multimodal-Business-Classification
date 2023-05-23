@@ -16,14 +16,14 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
     counter = 0
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
     for epoch in tqdm(range(config.epochs)):
-        for label, img, text, text_mask in train_loader:
-            loss = train_batch(img, text, text_mask, label, model, optimizer, criterion)
-            example_ct +=  len(label)
+        for labels, img, text, text_mask in train_loader:
+            loss = train_batch(img, text, text_mask, labels, model, optimizer, criterion)
+            example_ct +=  len(labels)
             batch_ct += 1
 
             # Report metrics every 25th batch
             if ((batch_ct + 1) % 25) == 0:
-                train_log(loss, example_ct, epoch)
+                train_log(loss/len(labels), example_ct, epoch)
         # Evaluate the epoch results oi the validation set
         val_loss, val_acc = val(model, val_loader, criterion, epoch)
         counter += 1
@@ -33,8 +33,8 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         #     counter += 1 
 
         # save the model if the validation accuracy is the best we've seen so far
-        if val_acc > best_val_acc:
-            best_val_acc = val_acc
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
             torch.save(model.state_dict(), "best_model_transformer_keras.pt")
             counter = 0
 
@@ -50,18 +50,18 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
 def train_batch(img, text, text_mask, labels, model, optimizer, criterion, device="cuda"):
     img, text, text_mask, labels = img.to(device), text.to(device), text_mask.to(device), labels.to(device)
     
-    # Forward pass ➡
+    # Forward pass 
     outputs = model(img, text, text_mask)
     loss = criterion(outputs, labels)
     
-    # Backward pass ⬅
+    # Backward pass 
     optimizer.zero_grad()
     loss.backward()
 
     # Step with optimizer
     optimizer.step()
 
-    return loss
+    return loss/len(labels)
 
 
 def train_log(loss, example_ct, epoch):
@@ -73,6 +73,7 @@ def val(model, val_loader, criterion, epoch, device="cuda"):
     model.eval()
     with torch.no_grad():
         correct, total = 0, 0
+        losses = 0
         for labels, img, text, text_mask in val_loader:
             img, labels, text, text_mask = img.to(device), labels.to(device), text.to(device), text_mask.to(device)
             outputs = model(img, text, text_mask)
@@ -80,11 +81,12 @@ def val(model, val_loader, criterion, epoch, device="cuda"):
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
+            losses += loss.item()
 
-        val_log(loss, correct / total, epoch)
+        val_log(losses/total, correct / total, epoch)
         print(f"Accuracy of the model on the {total} " +
               f"val images: {correct / total:%}")
-        return loss.item(), correct / total
+        return losses/total, correct / total
 
 def val_log(loss, accuracy, epoch):
     # Where the magic happens
