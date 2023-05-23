@@ -30,10 +30,10 @@ def get_data(slice=1, train=True):
     return sub_dataset
 
 
-def make_loader(dataset, batch_size):
+def make_loader(dataset, batch_size, shuffle=False):
     loader = DataLoader(dataset=dataset,
                         batch_size=batch_size, 
-                        shuffle=True,
+                        shuffle=shuffle,
                         pin_memory=True, num_workers=2)
     return loader
 
@@ -65,7 +65,7 @@ def make(config, device="cuda"):
     # Creating the datasets and the loaders for the train, test and validation
     # Train
     train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, w2v, transform=data_transforms_train)
-    train_loader = make_loader(train_dataset, config.batch_size)
+    train_loader = make_loader(train_dataset, config.batch_size, shuffle=True)
     # Test
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, w2v, transform=data_transforms_test)
     test_loader = make_loader(test_dataset, config.batch_size_val_test)
@@ -110,7 +110,7 @@ def make_test(config, device="cuda"):
     # Creating the datasets and the loaders for the train, test and validation
     # Train
     train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, w2v, transform=data_transforms_train)
-    train_loader = make_loader(train_dataset, config["batch_size"])
+    train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)
     # Test
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, w2v, transform=data_transforms_test)
     test_loader = make_loader(test_dataset, config["batch_size_val_test"])
