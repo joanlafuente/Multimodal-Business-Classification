@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 from models.models import *
 import gensim.downloader as api
+import pickle
 
 data_path = "/content/dlnn-project_ia-group_15/data/"
 anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
@@ -39,7 +40,7 @@ def make_loader(dataset, batch_size, shuffle=False):
     loader = DataLoader(dataset=dataset,
                         batch_size=batch_size, 
                         shuffle=shuffle,
-                        pin_memory=True, num_workers=2)
+                        pin_memory=True, num_workers=4)
     return loader
 
 
@@ -192,3 +193,99 @@ class Dataset_ConText(Dataset):
                     text_mask[i] = False
                     i += 1
         return (int(label)-1), img, np.array(words), text_mask
+    
+
+# Not optimizing CNN helper functions and clases
+
+class Dataset_imgs(Dataset):
+    def __init__(self, img_dir, img_list, labels_list, transform=None):
+        self.img_dir = img_dir
+        self.img_list = img_list
+        self.labels_list = labels_list
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.img_list)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = self.img_list[idx]
+        img  = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
+        label = self.labels_list[idx]
+
+        if self.transform:
+            img = self.transform(img)
+    
+        return (int(label)-1), img, img_name
+
+class Dataset_ConText_Features(Dataset):
+    def __init__(self, img_dir, data, anotations, embed):
+        self.img_dir = img_dir
+        self.img_list = data["img_names"]
+        self.labels_list = data["labels"]
+        self.img_features = data["features"]
+
+        self.anotations = anotations
+        self.w2v = embed
+        self.dim_w2v = 300
+        self.vocab = set(self.w2v.key_to_index.keys())
+        self.max_n_words = 40
+
+    def __len__(self):
+        return len(self.img_list)
+
+    def __getitem__(self, idx):
+        if torch.is_tensor(idx):
+            idx = idx.tolist()
+
+        img_name = self.img_list[idx]
+        img_features = torch.tensor(self.img_features[idx])
+        label = self.labels_list[idx]
+        words_OCR = self.anotations[self.anotations.index == img_name].iloc[0]
+
+
+        words = np.zeros((self.max_n_words, self.dim_w2v))
+        text_mask = np.ones((self.max_n_words,), dtype=bool)
+        i = 0
+        for word in list(set(words_OCR[0])):
+            if len(word) > 2:
+                if (word.lower() in self.vocab) and (i < self.max_n_words):
+                    words[i,:] = self.w2v[word.lower()]
+                    text_mask[i] = False
+                    i += 1
+    
+        return int(label), img_features, np.array(words), text_mask
+    
+
+def make_features(config, device="cuda"):
+    # Make the data and model
+    global data_path, anotation_path, img_dir, txt_dir
+    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+
+    ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
+    # Load the labels of the images and split them into train, test and validation
+    with open(r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl", "rb") as f:
+        data = pickle.load(f)
+    # Creating the datasets and the loaders for the train, test and validation
+    # Train
+    train_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["train"], anotations=ocr_data, embed=w2v)
+    train_loader = make_loader(train_dataset, config.batch_size, shuffle=True)
+    # Test
+    test_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["test"], anotations=ocr_data, embed=w2v)
+    test_loader = make_loader(test_dataset, config.batch_size_val_test)
+    # Validation
+    val_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["val"], anotations=ocr_data, embed=w2v)
+    val_loader = make_loader(val_dataset, config.batch_size_val_test)
+    
+    # Make the model
+    model = Transformer_without_extracting_features(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
+
+    # Make the loss and optimizer
+    criterion = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(
+        model.parameters(), lr=config.learning_rate)
+
+    return model, criterion, optimizer, train_loader, test_loader, val_loader
+    
