@@ -33,7 +33,7 @@ def model_pipeline(cfg:dict) -> None:
       config = wandb.config
 
       # make the model, data, and optimization problem
-      model, criterion, optimizer, train_loader, test_loader, val_loader = make(config)
+      model, criterion, optimizer, train_loader, test_loader, val_loader = make_features(config)
       # and use them to train the model
       train(model, train_loader, val_loader, criterion, optimizer, config)
       
@@ -49,11 +49,11 @@ if __name__ == "__main__":
         epochs=35,
         classes=28,
         batch_size=20,
-        batch_size_val_test=30,
+        batch_size_val_test=25,
         learning_rate=0.00005,
         patience=10,
         heads=8,
-        depth=3,
+        depth=5,
         fc_transformer=340,
         dataset="ConText",
         architecture="Transformer",
