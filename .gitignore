@@ -128,3 +128,5 @@ dmypy.json
 # Pyre type checker
 .pyre/
 features_extracted.pkl
+cc.en.300.bin
+cc.en.300.bin.gz

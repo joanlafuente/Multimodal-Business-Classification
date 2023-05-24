@@ -12,6 +12,8 @@ from PIL import Image
 from models.models import *
 import gensim.downloader as api
 import pickle
+import fasttext
+import fasttext.util
 
 data_path = "/content/dlnn-project_ia-group_15/data/"
 anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
@@ -25,23 +27,11 @@ txt_dir = data_path + r"\ImageSets\0"
 path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
 
-def get_data(slice=1, train=True):
-    full_dataset = torchvision.datasets.MNIST(root=".",
-                                              train=train, 
-                                              transform=transforms.ToTensor(),
-                                              download=True)
-    #  equiv to slicing with [::slice] 
-    sub_dataset = torch.utils.data.Subset(
-      full_dataset, indices=range(0, len(full_dataset), slice))
-    
-    return sub_dataset
-
-
 def make_loader(dataset, batch_size, shuffle=False):
     loader = DataLoader(dataset=dataset,
                         batch_size=batch_size, 
                         shuffle=shuffle,
-                        pin_memory=True, num_workers=4)
+                        pin_memory=True, num_workers=0)
     return loader
 
 
@@ -64,7 +54,9 @@ def make(config, device="cuda"):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+    # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+    fasttext.util.download_model('en') 
+    w2v = fasttext.load_model(r"C:\Users\Joan\Desktop\Deep_Learning_project\cc.en.300.bin")
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # Load the labels of the images and split them into train, test and validation
@@ -164,9 +156,9 @@ class Dataset_ConText(Dataset):
         self.labels_list = labels_list
         self.transform = transform
         self.anotations = anotations
-        self.w2v = embed
         self.dim_w2v = 300
-        self.vocab = set(self.w2v.key_to_index.keys())
+        self.w2v = embed
+        # self.vocab = set(self.w2v.key_to_index.keys()) # Comented when using fasttext
         self.max_n_words = 40
 
     def __len__(self):
@@ -189,8 +181,10 @@ class Dataset_ConText(Dataset):
         i = 0
         for word in list(set(words_OCR[0])):
             if len(word) > 2:
-                if (word.lower() in self.vocab) and (i < self.max_n_words):
-                    words[i,:] = self.w2v[word.lower()]
+                # if (word.lower() in self.vocab) and (i < self.max_n_words): # Comented when using fasttext
+                    # words[i,:] = self.w2v[word.lower()] # Comented when using fasttext
+                if i < self.max_n_words: # Comented when using glove
+                    words[i,:] = self.w2v.get_word_vector(word)  # Comented when using glove
                     text_mask[i] = False
                     i += 1
         return (int(label)-1), img, np.array(words), text_mask

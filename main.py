@@ -33,12 +33,12 @@ def model_pipeline(cfg:dict) -> None:
       config = wandb.config
 
       # make the model, data, and optimization problem
-      model, criterion, optimizer, train_loader, test_loader, val_loader = make_features(config)
+      model, criterion, optimizer, train_loader, test_loader, val_loader = make(config)
       # and use them to train the model
       train(model, train_loader, val_loader, criterion, optimizer, config)
       
       # and test its final performance
-      test(model, test_loader, save=False)
+      test(model, test_loader, config=config, save=True)
 
     return model
 
@@ -52,12 +52,13 @@ if __name__ == "__main__":
         batch_size_val_test=25,
         learning_rate=0.00005,
         patience=10,
-        heads=8,
-        depth=5,
+        heads=6,
+        depth=3,
         fc_transformer=340,
         dataset="ConText",
         architecture="Transformer",
         cnn = "convnext_tiny",
-        weights = "DEFAULT")
+        weights = "DEFAULT",
+        name_model="fasttext.pkl")
     model = model_pipeline(config)
 
