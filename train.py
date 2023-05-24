@@ -32,13 +32,13 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
         # save the model if the validation accuracy is the best we've seen so far
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model.state_dict(), "best_model_transformer_keras.pt")
+            torch.save(model.state_dict(), "best_model.pt")
             counter = 0
 
         if config.patience < counter:
             break
         scheduler.step(val_loss)
-    model.load_state_dict(torch.load("best_model_transformer_keras.pt"))
+    model.load_state_dict(torch.load("best_model.pt"))
     return model
 
         
