@@ -101,7 +101,8 @@ def make_test(config, device="cuda"):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+    # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+    w2v = fasttext.load_model(r"C:\Users\Joan\Desktop\Deep_Learning_project\cc.en.300.bin")
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # Load the labels of the images and split them into train, test and validation
