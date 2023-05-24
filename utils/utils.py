@@ -22,6 +22,7 @@ data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
 anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
 img_dir = data_path + r"\JPEGImages"
 txt_dir = data_path + r"\ImageSets\0"
+path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
 
 def get_data(slice=1, train=True):
@@ -266,7 +267,7 @@ def make_features(config, device="cuda"):
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # Load the labels of the images and split them into train, test and validation
-    with open(r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl", "rb") as f:
+    with open(path_features, "rb") as f:
         data = pickle.load(f)
     # Creating the datasets and the loaders for the train, test and validation
     # Train
@@ -288,4 +289,32 @@ def make_features(config, device="cuda"):
         model.parameters(), lr=config.learning_rate)
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
+    
+
+
+def make_features_test(config, device="cuda"):
+    # Make the data and model
+    global data_path, anotation_path, img_dir, txt_dir
+    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+
+    ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
+    # Load the labels of the images and split them into train, test and validation
+    with open(path_features, "rb") as f:
+        data = pickle.load(f)
+    # Creating the datasets and the loaders for the train, test and validation
+    # Train
+    train_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["train"], anotations=ocr_data, embed=w2v)
+    train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)
+    # Test
+    test_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["test"], anotations=ocr_data, embed=w2v)
+    test_loader = make_loader(test_dataset, config["batch_size_val_test"])
+    # Validation
+    val_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["val"], anotations=ocr_data, embed=w2v)
+    val_loader = make_loader(val_dataset, config["batch_size_val_test"])
+    
+    # Make the model
+    model = Transformer_without_extracting_features(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+
+
+    return model, train_loader, test_loader, val_loader
     
