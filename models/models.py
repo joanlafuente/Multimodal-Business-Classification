@@ -140,3 +140,69 @@ class Transformer(nn.Module):
         x = x[:, 0]
         x = self.fc(x)
         return x
+    
+
+
+
+class Feature_Extractor(nn.Module):
+    def __init__(self):
+        super(Feature_Extractor, self).__init__()
+        full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+        modules=list(full_cnn.children())[:-2]
+        self.feature_extractor=nn.Sequential(*modules)
+        for param in self.feature_extractor.parameters():
+            param.requires_grad = False
+
+    def forward(self, img):
+        x = self.feature_extractor(img)
+        return x
+
+
+class Transformer_without_extracting_features(nn.Module):
+    def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
+        super(Transformer_without_extracting_features, self).__init__()
+        self.dim_features_feature_extractor = 768 
+        self.n_features_feature_extractor = 49 # 7x7
+        self.dim_text_features = 300
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        # Dimension in which the images and text are embedded
+        self.dim = 360
+
+        # Embed for the text and image features
+        self.cnn_features_embed = nn.Linear(self.n_features_feature_extractor, self.dim)
+        self.text_features_embed = nn.Linear(self.dim_text_features, self.dim)
+
+        # Positional embedding for the image features
+        self.pos_embedding = nn.Parameter(torch.randn(1, self.dim_features_feature_extractor + 1, self.dim))
+        self.cls_token = nn.Parameter(torch.randn(1, 1, self.dim))
+
+        # Transformer Encoder
+        encoder_layer = nn.TransformerEncoderLayer(d_model=self.dim, nhead=heads_transformer, dim_feedforward=dim_fc_transformer, batch_first=True)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=depth_transformer)
+
+        # Classification fc
+        self.fc = nn.Sequential(
+            nn.Linear(self.dim, dim_fc_transformer),
+            nn.GELU(),
+            nn.Linear(dim_fc_transformer, num_classes)
+        )
+
+    def forward(self, image_features, txt, text_mask):
+        batch_size = txt.size(0)
+        image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
+        image_features = self.cnn_features_embed(image_features) 
+
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1)
+        x = torch.cat((cls_tokens, image_features), dim=1)
+        x += self.pos_embedding
+
+        text_features = self.text_features_embed(txt.float())
+        x = torch.cat((x, text_features), dim=1)
+
+        tmp_mask = torch.zeros((batch_size, 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
+        mask = torch.cat((tmp_mask, text_mask), dim=1)
+        x = self.transformer(x, src_key_padding_mask=mask)
+
+        x = x[:, 0]
+        x = self.fc(x)
+        return x
