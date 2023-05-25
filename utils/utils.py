@@ -56,7 +56,7 @@ def make(config, device="cuda"):
     ])
     # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
     fasttext.util.download_model('en') 
-    w2v = fasttext.load_model(r"C:\Users\Joan\Desktop\Deep_Learning_project\cc.en.300.bin")
+    w2v = fasttext.load_model("cc.en.300.bin")
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # Load the labels of the images and split them into train, test and validation
