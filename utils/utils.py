@@ -22,7 +22,7 @@ img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
 data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs"
+anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
@@ -33,9 +33,12 @@ path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 # txt_dir = data_path + r"\ImageSets\0"
 # path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
-#save the model 'en' in path /home/user/
-fasttext.util.download_model('en', if_exists='ignore')  # English
-!mv cc.en.300.bin /home/xnmaster/Project/cc.en.300.bin
+# Comment the next 5 lines if you already have the model downloaded
+print("Downloading fasttext model...")
+fasttext.util.download_model('en', if_exists='ignore')  
+
+print("Moving model to" + path_fasttext + "...")
+os.rename("./cc.en.300.bin", path_fasttext)
 
 def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext):
     # fasttext.util.download_model('en', if_exists='ignore')  # English
@@ -68,7 +71,7 @@ def make_loader(dataset, batch_size, shuffle=False):
     loader = DataLoader(dataset=dataset,
                         batch_size=batch_size, 
                         shuffle=shuffle,
-                        pin_memory=True, num_workers=0)
+                        pin_memory=True, num_workers=4)
     return loader
 
 
