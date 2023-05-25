@@ -1,4 +1,4 @@
-import pickle
+from tqdm import tqdm 
 import wandb
 import torch
 import torch.nn 
@@ -22,7 +22,7 @@ img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
 data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs"
+anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
@@ -33,19 +33,48 @@ path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 # txt_dir = data_path + r"\ImageSets\0"
 # path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
-#save the model 'en' in path /home/user/
-# fasttext.util.download_model('en', if_exists='ignore')  # English
-# !mv cc.en.300.bin /home/xnmaster/Project/cc.en.300.bin
+# Comment the next 5 lines if you already have the model downloaded
+# print("Downloading fasttext model...")
+# fasttext.util.download_model('en', if_exists='ignore')  
 
+# print("Moving model to" + path_fasttext + "...")
+# os.rename("./cc.en.300.bin", path_fasttext)
 
+def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext):
+    # fasttext.util.download_model('en', if_exists='ignore')  # English
+
+    anotations = pd.read_pickle(anotation_path)
+    w2v = fasttext.load_model(path_fasttext)
+    # vocab = set(w2v.key_to_index.keys()) # Comented when using fasttext
+
+    anotation_vecs = {}
+    for i, img_name in tqdm(enumerate(anotations.index)):
+        if i % 3000 == 0:
+            print("Processed {} images out of {}".format(i, len(anotations.index)))
+        words_OCR = anotations[anotations.index == img_name].iloc[0]
+
+        words = np.zeros((max_n_words, dim_w2v))
+        text_mask = np.ones((max_n_words,), dtype=bool)
+        i = 0
+        for word in list(set(words_OCR[0])):
+            if len(word) > 2:
+                # if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
+                    # words[i,:] = w2v[word.lower()] # Comented when using fasttext
+                
+                if i < max_n_words: # Comented when using glove
+                    words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
+                    text_mask[i] = False
+                    i += 1
+            
+        anotation_vecs[img_name] = (words, text_mask)
+    return anotation_vecs
 
 def make_loader(dataset, batch_size, shuffle=False):
     loader = DataLoader(dataset=dataset,
                         batch_size=batch_size, 
                         shuffle=shuffle,
-                        pin_memory=True, num_workers=0)
+                        pin_memory=True, num_workers=4)
     return loader
-
 
 def make(config, device="cuda"):
     # Make the data and model
@@ -69,20 +98,24 @@ def make(config, device="cuda"):
     # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
     # w2v = fasttext.load_model(path_fasttext) # Initialize the embeding
 
+
+
     # ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # anotations = pd.read_pickle(anotation_path) # Open the data with the data of the OCR2vec and masks
+    # dic_anotations_total = {}
+    # for i in range(25):
+    #     anotation_path_complete = anotation_path +"_" + str(i) + ".pkl"
+    #     dic_anotations = pickle.load(open(anotation_path_complete, "rb"))
+    #     if i == 0:
+    #         dic_anotations_total = dic_anotations.copy()
+    #     else:
+    #         dic_anotations_total.update(dic_anotations)
+
+    # anotations = dic_anotations_total
     
-
-    dic_anotations_total = {}
-    for i in range(25):
-        anotation_path_complete = anotation_path +"_" + str(i) + ".pkl"
-        dic_anotations = pickle.load(open(anotation_path_complete, "rb"))
-        if i == 0:
-            dic_anotations_total = dic_anotations.copy()
-        else:
-            dic_anotations_total.update(dic_anotations)
-
-    anotations = dic_anotations_total
+    print("Creating anotations...")
+    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
+    
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
@@ -106,12 +139,19 @@ def make(config, device="cuda"):
         val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
     # Make the model
-    model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
-
-    # Make the loss and optimizer
+    if type(config) == dict:
+        model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+    else:
+        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
+    #
+    #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.learning_rate)
+    if type(config) == dict:
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=config["learning_rate"])
+    else:
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=config.learning_rate)
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
     
@@ -181,8 +221,6 @@ def load_labels_and_split(path_sets, random_state=42):
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
-    
-    
 class Dataset_ConText(Dataset):
     def __init__(self, img_dir, img_list,labels_list, anotations, transform=None):
         self.img_dir = img_dir
@@ -211,7 +249,6 @@ class Dataset_ConText(Dataset):
     
 
 # Not optimizing CNN helper functions and clases
-
 class Dataset_imgs(Dataset):
     def __init__(self, img_dir, img_list, labels_list, transform=None):
         self.img_dir = img_dir
@@ -273,7 +310,6 @@ class Dataset_ConText_Features(Dataset):
     
         return int(label), img_features, np.array(words), text_mask
     
-
 def make_features(config, device="cuda"):
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir
@@ -303,8 +339,6 @@ def make_features(config, device="cuda"):
         model.parameters(), lr=config.learning_rate)
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
-    
-
 
 def make_features_test(config, device="cuda"):
     # Make the data and model

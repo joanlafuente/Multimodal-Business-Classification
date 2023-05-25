@@ -24,8 +24,6 @@ torch.cuda.manual_seed_all(hash("so runs are repeatable") % 2**32 - 1)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 
-
-
 def model_pipeline(cfg:dict) -> None:
     # tell wandb to get started
     with wandb.init(project="business_recognition", config=cfg):

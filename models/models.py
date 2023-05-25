@@ -8,8 +8,8 @@ class Transformer(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
         super(Transformer, self).__init__()
 
-        full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
-        # full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
+        # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+        full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
         # weights = torchvision.models.RegNet_Y_16GF_Weights.IMAGENET1K_V2
         # full_cnn  = torchvision.models.regnet_y_16gf(weights=weights) # output 3024
         # full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
