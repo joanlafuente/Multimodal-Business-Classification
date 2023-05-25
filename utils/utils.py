@@ -49,7 +49,8 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
 
     anotation_vecs = {}
     for i, img_name in tqdm(enumerate(anotations.index)):
-        print(i, len(anotations.index))
+        if i % 3000 == 0:
+            print("Processed {} images out of {}".format(i, len(anotations.index)))
         words_OCR = anotations[anotations.index == img_name].iloc[0]
 
         words = np.zeros((max_n_words, dim_w2v))
@@ -73,7 +74,6 @@ def make_loader(dataset, batch_size, shuffle=False):
                         shuffle=shuffle,
                         pin_memory=True, num_workers=4)
     return loader
-
 
 def make(config, device="cuda"):
     # Make the data and model
@@ -112,6 +112,7 @@ def make(config, device="cuda"):
 
     # anotations = dic_anotations_total
     
+    print("Creating anotations...")
     anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
     
     # Load the labels of the images and split them into train, test and validation
@@ -137,12 +138,19 @@ def make(config, device="cuda"):
         val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
     # Make the model
-    model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
-
-    # Make the loss and optimizer
+    if type(config) == dict:
+        model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+    else:
+        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
+    #
+    #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.learning_rate)
+    if type(config) == dict:
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=config["learning_rate"])
+    else:
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=config.learning_rate)
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
     
@@ -212,8 +220,6 @@ def load_labels_and_split(path_sets, random_state=42):
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
-    
-    
 class Dataset_ConText(Dataset):
     def __init__(self, img_dir, img_list,labels_list, anotations, transform=None):
         self.img_dir = img_dir
@@ -242,7 +248,6 @@ class Dataset_ConText(Dataset):
     
 
 # Not optimizing CNN helper functions and clases
-
 class Dataset_imgs(Dataset):
     def __init__(self, img_dir, img_list, labels_list, transform=None):
         self.img_dir = img_dir
@@ -304,7 +309,6 @@ class Dataset_ConText_Features(Dataset):
     
         return int(label), img_features, np.array(words), text_mask
     
-
 def make_features(config, device="cuda"):
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir
@@ -334,8 +338,6 @@ def make_features(config, device="cuda"):
         model.parameters(), lr=config.learning_rate)
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
-    
-
 
 def make_features_test(config, device="cuda"):
     # Make the data and model
