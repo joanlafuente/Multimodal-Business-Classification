@@ -8,12 +8,12 @@ fasttext.util.download_model('en', if_exists='ignore')  # English
 
 
 data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+anotation_path= r"C:\Users\Maria\OneDrive - UAB\Documentos\2º de IA\NN and Deep Learning\dlnn-project_ia-group_15\anotations_keras.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
-path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
+path_fasttext = "./cc.en.300.bin"
 
-path_new_anotation = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs.pkl"
+# path_new_anotation = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs.pkl"
 
 
 anotations = pd.read_pickle(anotation_path)
@@ -25,19 +25,23 @@ max_n_words = 40
 anotation_vecs = {}
 for i, img_name in tqdm(enumerate(anotations.index)):
     print(i, len(anotations.index))
-    words_OCR = anotations[anotations.index == img_name].iloc[0]
+    words_OCR = anotations[anotations.index == img_name].values[0][0]
 
     words = np.zeros((max_n_words, dim_w2v))
     text_mask = np.ones((max_n_words,), dtype=bool)
     i = 0
-    for word in list(set(words_OCR[0])):
+    for word in list(set(words_OCR)):
         if len(word) > 2:
             # if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
                 # words[i,:] = w2v[word.lower()] # Comented when using fasttext
             if i < max_n_words: # Comented when using glove
                 words[i,:] = w2v.get_word_vector(word)  # Comented when using glove
+                print(words_OCR, words[i,:]) 
                 text_mask[i] = False
                 i += 1
+    if i > 100:
+        break
+    
         
     anotation_vecs[img_name] = (words, text_mask)
 
