@@ -26,6 +26,9 @@ img_dir = data_path + r"\JPEGImages"
 txt_dir = data_path + r"\ImageSets\0"
 path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
+#save the model 'en' in path /home/user/
+fasttext.util.download_model('en', if_exists='ignore')  # English
+!mv cc.en.300.bin /home/user/fastText/cc.en.300.bin
 
 def make_loader(dataset, batch_size, shuffle=False):
     loader = DataLoader(dataset=dataset,
@@ -55,7 +58,6 @@ def make(config, device="cuda"):
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
-    fasttext.util.download_model('en') 
     w2v = fasttext.load_model("cc.en.300.bin")
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
