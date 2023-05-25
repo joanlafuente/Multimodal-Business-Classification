@@ -48,6 +48,39 @@ pickle.dump(anotation_vecs, open(path_new_anotation, "wb"))
 #open anotation
 import pickle
 anotation_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs.pkl"
-dic_anotations = pickle.load(open(anotation_path, "rb"))
+dic_anotations_original = pickle.load(open(anotation_path, "rb"))
 # print(dic_anotations.keys())
 print(dic_anotations['n04146050_15720.jpg'])
+
+
+# open anotation_vecs and divide the file of 100mb each
+import pickle
+import os
+from math import ceil
+anotation_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs.pkl"
+dic_anotations = pickle.load(open(anotation_path, "rb"))
+
+for i in range(ceil(len(dic_anotations.keys())/1000)):
+    dic_anotations_copy = dic_anotations.copy()
+    dic_anotations_copy = dict(list(dic_anotations_copy.items())[i*1000:(i+1)*1000])
+
+    pickle.dump(dic_anotations_copy, open(anotation_path.split(".")[0] + "_"+ str(i) + ".pkl", "wb"))
+
+    print(os.path.getsize(anotation_path.split(".")[0] + "_"+ str(i) + ".pkl")/1000000)
+
+
+#open all anotation_vecs and merge them
+import pickle
+import os
+
+dic_anotations_total = {}
+for i in range(25):
+    anotation_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs_" + str(i) + ".pkl"
+    dic_anotations = pickle.load(open(anotation_path, "rb"))
+    if i == 0:
+        dic_anotations_total = dic_anotations.copy()
+    else:
+        dic_anotations_total.update(dic_anotations)
+
+# comprobation that dic_anotations_total is the same as dic_anotations
+print(dic_anotations_total.keys() == dic_anotations_original.keys())
