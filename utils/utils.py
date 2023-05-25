@@ -22,7 +22,7 @@ img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
 data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs.pkl"
+anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_vecs"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
@@ -103,7 +103,7 @@ def make(config, device="cuda"):
     if type(config) == dict:
         val_loader = make_loader(val_dataset, config["batch_size_val_test"])
     else:
-        test_loader = make_loader(val_dataset, config.batch_size_val_test)
+        val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
     # Make the model
     model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
