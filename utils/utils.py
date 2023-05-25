@@ -34,11 +34,11 @@ path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 # path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
 #save the model 'en' in path /home/user/
-# fasttext.util.download_model('en', if_exists='ignore')  # English
-# !mv cc.en.300.bin /home/xnmaster/Project/cc.en.300.bin
+fasttext.util.download_model('en', if_exists='ignore')  # English
+!mv cc.en.300.bin /home/xnmaster/Project/cc.en.300.bin
 
 def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext):
-    fasttext.util.download_model('en', if_exists='ignore')  # English
+    # fasttext.util.download_model('en', if_exists='ignore')  # English
 
     anotations = pd.read_pickle(anotation_path)
     w2v = fasttext.load_model(path_fasttext)
