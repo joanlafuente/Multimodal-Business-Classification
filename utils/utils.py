@@ -15,24 +15,24 @@ import gensim.downloader as api
 import pickle
 import fasttext
 import fasttext.util
+from googletrans import Translator
 
-# data_path = "/content/dlnn-project_ia-group_15/data/"
-# anotation_path= "/content/dlnn-project_ia-group_15/anotations_vecs.pkl"
-# img_dir = data_path + "JPEGImages"
-# txt_dir = data_path + "ImageSets/0"
+data_path = "/content/dlnn-project_ia-group_15/data/"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_vecs.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
 
-# data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-# anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
-# img_dir = data_path + "JPEGImages"
-# txt_dir = data_path + "ImageSets/0"
-# path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
+data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
+anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
+path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
-anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
-img_dir = data_path + r"\JPEGImages"
-txt_dir = data_path + r"\ImageSets\0"
-path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
-path_fasttext = ""
+# data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
+# anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+# img_dir = data_path + r"\JPEGImages"
+# txt_dir = data_path + r"\ImageSets\0"
+# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
 # Comment the next 5 lines if you already have the model downloaded
 # print("Downloading fasttext model...")
@@ -41,35 +41,47 @@ path_fasttext = ""
 # print("Moving model to" + path_fasttext + "...")
 # os.rename("./cc.en.300.bin", path_fasttext)
 
-def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext):
+def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", translate = False):
     # fasttext.util.download_model('en', if_exists='ignore')  # English
 
     anotations = pd.read_pickle(anotation_path)
-    #w2v = fasttext.load_model(path_fasttext)
+    if approach == "fasttext":
+        w2v = fasttext.load_model(path_fasttext)
+    
+    else:
+        w2v = api.load('glove-wiki-gigaword-300')
+        vocab = set(w2v.key_to_index.keys()) # Comented when using fasttext
 
-    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
-    vocab = set(w2v.key_to_index.keys()) # Comented when using fasttext
+    if translate:
+        translator = Translator()
 
     anotation_vecs = {}
     for i, img_name in tqdm(enumerate(anotations.index)):
         if i % 3000 == 0:
             print("Processed {} images out of {}".format(i, len(anotations.index)))
-        words_OCR = anotations[anotations.index == img_name].iloc[0]
+        words_OCR = anotations[anotations.index == img_name].values[0][0]
 
         words = np.zeros((max_n_words, dim_w2v))
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
-        for word in list(set(words_OCR[0])):
+        for word in list(set(words_OCR)):
             if len(word) > 2:
-                if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
-                    words[i,:] = w2v[word.lower()] # Comented when using fasttext
-                    text_mask[i] = False
-                    i += 1
+                if translate == True:
+                    prev_word = word
+                    word = translator.translate(word, dest='en').text
+                    if prev_word != word:
+                        with open("translated_words.txt", "a") as f:
+                            f.write(prev_word + " --> " + word + "\n")
+
+                if approach == "fasttext":
+                    if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
+                        words[i,:] = w2v[word.lower()] # Comented when using fasttext
                 
-                # if i < max_n_words: # Comented when using glove
-                #     words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
-                #     text_mask[i] = False
-                #     i += 1
+                else:
+                    if i < max_n_words: # Comented when using glove
+                        words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
+                        text_mask[i] = False
+                        i += 1
             
         anotation_vecs[img_name] = (words, text_mask)
     return anotation_vecs
@@ -100,20 +112,6 @@ def make(config, device="cuda"):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    
-
-    # ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
-    # anotations = pd.read_pickle(anotation_path) # Open the data with the data of the OCR2vec and masks
-    # dic_anotations_total = {}
-    # for i in range(25):
-    #     anotation_path_complete = anotation_path +"_" + str(i) + ".pkl"
-    #     dic_anotations = pickle.load(open(anotation_path_complete, "rb"))
-    #     if i == 0:
-    #         dic_anotations_total = dic_anotations.copy()
-    #     else:
-    #         dic_anotations_total.update(dic_anotations)
-
-    # anotations = dic_anotations_total
     
     print("Creating anotations...")
     anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
@@ -149,10 +147,14 @@ def make(config, device="cuda"):
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
     if type(config) == dict:
-        return model, train_loader, test_loader, val_loader
+        optimizer = torch.optim.Adam(
+            model.parameters(), lr=config["learning_rate"])
+        return model, criterion, optimizer, train_loader, test_loader, val_loader
+    
     else:
         optimizer = torch.optim.Adam(
             model.parameters(), lr=config.learning_rate)
+
         return model, criterion, optimizer, train_loader, test_loader, val_loader
     
 # def make_test(config, device="cuda"):
