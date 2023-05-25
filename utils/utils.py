@@ -1,3 +1,4 @@
+    import pickle
 import wandb
 import torch
 import torch.nn 
@@ -69,8 +70,19 @@ def make(config, device="cuda"):
     # w2v = fasttext.load_model(path_fasttext) # Initialize the embeding
 
     # ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
-    anotations = pd.read_pickle(anotation_path) # Open the data with the data of the OCR2vec and masks
+    # anotations = pd.read_pickle(anotation_path) # Open the data with the data of the OCR2vec and masks
     
+
+    dic_anotations_total = {}
+    for i in range(25):
+        anotation_path_complete = anotation_path +"_" + str(i) + ".pkl"
+        dic_anotations = pickle.load(open(anotation_path_complete, "rb"))
+        if i == 0:
+            dic_anotations_total = dic_anotations.copy()
+        else:
+            dic_anotations_total.update(dic_anotations)
+
+    anotations = dic_anotations_total
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
