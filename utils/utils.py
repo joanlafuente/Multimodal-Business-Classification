@@ -16,22 +16,23 @@ import pickle
 import fasttext
 import fasttext.util
 
-data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_vecs.pkl"
-img_dir = data_path + "JPEGImages"
-txt_dir = data_path + "ImageSets/0"
+# data_path = "/content/dlnn-project_ia-group_15/data/"
+# anotation_path= "/content/dlnn-project_ia-group_15/anotations_vecs.pkl"
+# img_dir = data_path + "JPEGImages"
+# txt_dir = data_path + "ImageSets/0"
 
-data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
-img_dir = data_path + "JPEGImages"
-txt_dir = data_path + "ImageSets/0"
-path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
+# data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
+# anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+# img_dir = data_path + "JPEGImages"
+# txt_dir = data_path + "ImageSets/0"
+# path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-# data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
-# anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
-# img_dir = data_path + r"\JPEGImages"
-# txt_dir = data_path + r"\ImageSets\0"
-# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
+anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + r"\JPEGImages"
+txt_dir = data_path + r"\ImageSets\0"
+path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+path_fasttext = ""
 
 # Comment the next 5 lines if you already have the model downloaded
 # print("Downloading fasttext model...")
@@ -44,8 +45,10 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
     # fasttext.util.download_model('en', if_exists='ignore')  # English
 
     anotations = pd.read_pickle(anotation_path)
-    w2v = fasttext.load_model(path_fasttext)
-    # vocab = set(w2v.key_to_index.keys()) # Comented when using fasttext
+    #w2v = fasttext.load_model(path_fasttext)
+
+    w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
+    vocab = set(w2v.key_to_index.keys()) # Comented when using fasttext
 
     anotation_vecs = {}
     for i, img_name in tqdm(enumerate(anotations.index)):
@@ -57,14 +60,14 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
         for word in list(set(words_OCR[0])):
-            if len(word) > 2:
-                # if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
-                    # words[i,:] = w2v[word.lower()] # Comented when using fasttext
+            if len(word) >= 2:
+                if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
+                    words[i,:] = w2v[word.lower()] # Comented when using fasttext
                 
-                if i < max_n_words: # Comented when using glove
-                    words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
-                    text_mask[i] = False
-                    i += 1
+                # if i < max_n_words: # Comented when using glove
+                #     words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
+                #     text_mask[i] = False
+                #     i += 1
             
         anotation_vecs[img_name] = (words, text_mask)
     return anotation_vecs
@@ -95,10 +98,7 @@ def make(config, device="cuda"):
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
-    # w2v = fasttext.load_model(path_fasttext) # Initialize the embeding
-
-
+    
 
     # ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # anotations = pd.read_pickle(anotation_path) # Open the data with the data of the OCR2vec and masks
