@@ -60,9 +60,11 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
         for word in list(set(words_OCR[0])):
-            if len(word) >= 2:
+            if len(word) > 2:
                 if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
                     words[i,:] = w2v[word.lower()] # Comented when using fasttext
+                    text_mask[i] = False
+                    i += 1
                 
                 # if i < max_n_words: # Comented when using glove
                 #     words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
