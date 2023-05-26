@@ -5,7 +5,7 @@ import torch
 # Conventional and convolutional neural network
 
 class Transformer(nn.Module):
-    def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
+    def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer, drop=0.1):
         super(Transformer, self).__init__()
 
         full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
@@ -38,7 +38,9 @@ class Transformer(nn.Module):
 
         # Classification fc
         self.fc = nn.Sequential(
+            nn.Dropout(drop),
             nn.Linear(self.dim, dim_fc_transformer),
+            nn.Dropout(drop),
             nn.GELU(),
             nn.Linear(dim_fc_transformer, num_classes)
         )

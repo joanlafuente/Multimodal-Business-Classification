@@ -65,7 +65,7 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
         for word in list(set(words_OCR)):
-            if len(word) > 1:
+            if len(word) > 2:
                 if translate == True:
                     prev_word = word
                     word = translator.translate(word, dest='en').text
@@ -144,7 +144,7 @@ def make(config, device="cuda"):
     if type(config) == dict:
         model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
     else:
-        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer).to(device)
+        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
     #
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
