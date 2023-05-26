@@ -46,8 +46,8 @@ if __name__ == "__main__":
     config = dict(
         epochs=35,
         classes=28,
-        batch_size=20,
-        batch_size_val_test=30,
+        batch_size=100,
+        batch_size_val_test=100,
         learning_rate=0.00006,
         patience=10,
         heads=4,
