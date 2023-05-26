@@ -1,3 +1,4 @@
+from textblob import TextBlob, Word
 from tqdm import tqdm 
 import wandb
 import torch
@@ -41,7 +42,7 @@ path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 # print("Moving model to" + path_fasttext + "...")
 # os.rename("./cc.en.300.bin", path_fasttext)
 
-def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", translate = False):
+def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", translate = False, correct = False):
     # fasttext.util.download_model('en', if_exists='ignore')  # English
 
     anotations = pd.read_pickle(anotation_path)
@@ -67,11 +68,20 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         i = 0
         for word in list(set(words_OCR)):
             if len(word) > 2 and word is not None:
-                if translate == True:
+                if correct:
+                    if word.lower() not in vocab:
+                        prev_word = word
+                        word = str(Word(word).correct())
+                        with open("corrected_words.txt", "a") as f:
+                                    f.write(prev_word + " --> " + word + "\n")
+
+                if translate:
                     prev_word = word
+                    
                     if word.lower() not in vocab:
                         try:
                             word = translator.translate(word, dest='en').text
+                            
                             # print(prev_word, word)
                             # if prev_word != word:
                             with open("translated_words.txt", "a") as f:
@@ -121,7 +131,7 @@ def make(config, device="cuda"):
     ])
     
     print("Creating anotations...")
-    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, translate = True)
+    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
     
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
