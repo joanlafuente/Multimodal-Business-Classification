@@ -17,23 +17,23 @@ import fasttext
 import fasttext.util
 from googletrans import Translator
 
-data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_vecs.pkl"
-img_dir = data_path + "JPEGImages"
-txt_dir = data_path + "ImageSets/0"
+# data_path = "/content/dlnn-project_ia-group_15/data/"
+# anotation_path= "/content/dlnn-project_ia-group_15/anotations_vecs.pkl"
+# img_dir = data_path + "JPEGImages"
+# txt_dir = data_path + "ImageSets/0"
 
-data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
-img_dir = data_path + "JPEGImages"
-txt_dir = data_path + "ImageSets/0"
-path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
+# data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
+# anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+# img_dir = data_path + "JPEGImages"
+# txt_dir = data_path + "ImageSets/0"
+# path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-# data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
-# anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
-# img_dir = data_path + r"\JPEGImages"
-# txt_dir = data_path + r"\ImageSets\0"
-# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
-
+data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
+anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + r"\JPEGImages"
+txt_dir = data_path + r"\ImageSets\0"
+path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+path_fasttext = ""
 # Comment the next 5 lines if you already have the model downloaded
 # print("Downloading fasttext model...")
 # fasttext.util.download_model('en', if_exists='ignore')  
@@ -65,7 +65,7 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
         for word in list(set(words_OCR)):
-            if len(word) > 2:
+            if len(word) > 1:
                 if translate == True:
                     prev_word = word
                     word = translator.translate(word, dest='en').text
@@ -73,9 +73,11 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
                         with open("translated_words.txt", "a") as f:
                             f.write(prev_word + " --> " + word + "\n")
 
-                if approach == "fasttext":
+                if approach == "glove":
                     if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
                         words[i,:] = w2v[word.lower()] # Comented when using fasttext
+                        text_mask[i] = False
+                        i += 1
                 
                 else:
                     if i < max_n_words: # Comented when using glove
@@ -114,7 +116,7 @@ def make(config, device="cuda"):
     ])
     
     print("Creating anotations...")
-    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
+    anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext)
     
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
