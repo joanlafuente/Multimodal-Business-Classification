@@ -101,6 +101,10 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
                             i += 1
             
         anotation_vecs[img_name] = (words, text_mask)
+    
+    # save anotation_vecs
+    with open("anotations_vecs_glove_translation.pkl", "wb") as f:
+        pickle.dump(anotation_vecs, f)
     return anotation_vecs
 
 def make_loader(dataset, batch_size, shuffle=False):
@@ -130,8 +134,12 @@ def make(config, device="cuda"):
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     
-    print("Creating anotations...")
-    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
+    try: 
+        with open("anotations_vecs_glove_translation.pkl", "rb") as f:
+            anotations = pickle.load(f)
+    except:
+        print("Creating anotations...")
+        anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", translate = False, correct = True)
     
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
