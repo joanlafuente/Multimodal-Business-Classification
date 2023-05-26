@@ -23,7 +23,13 @@ translator = Translator()
 
 anotation_vecs = {}
 correct = True
-translate = False
+translate = True
+
+with open("corrected_words.txt", "w") as f:
+    f.write("")
+
+with open("translated_words.txt", "w") as f:
+    f.write("")
 
 for i, img_name in tqdm(enumerate(anotations.index)):
     if i % 100 == 0:
@@ -62,5 +68,30 @@ for i, img_name in tqdm(enumerate(anotations.index)):
     #save in a new dict the anotations with the corrected words
     anotation_vecs[img_name] = words_OCR_processed
 
-    with open("anotations_corrected.pkl", "wb") as f:
+    with open("anotations_translated_corrected.pkl", "wb") as f:
         pickle.dump(anotation_vecs, f)
+
+
+
+#open anotations_corrected.pkl and save it in a dataframe
+import pandas as pd
+import pickle
+with open("anotations_translated_corrected.pkl", "rb") as f:
+    anotations = pickle.load(f)
+
+# iterate over the dict and save it in a dataframe
+tokens_imgs2 ={}
+for k,v in anotations.items():
+    if v == None: 
+        tokens_imgs2[k] = []
+    else:
+        tokens_imgs2[k] = [v]
+
+anotations = tokens_imgs2
+
+df_anotations = pd.DataFrame.from_dict(anotations, orient='index', columns=['text_detected'])
+
+
+print(df_anotations.head())
+
+df_anotations.to_pickle("anotations_translated_corrected.pkl")
