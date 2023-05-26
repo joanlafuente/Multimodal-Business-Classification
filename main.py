@@ -46,18 +46,18 @@ if __name__ == "__main__":
     config = dict(
         epochs=35,
         classes=28,
-        batch_size=13,
-        batch_size_val_test=13,
+        batch_size=20,
+        batch_size_val_test=30,
         learning_rate=0.00006,
         patience=10,
-        heads=8,
-        depth=4,
+        heads=4,
+        depth=3,
         fc_transformer=340,
-        dropout=0.4,
+        dropout=0.2,
         dataset="ConText",
         architecture="Transformer",
-        cnn = "MobileNetV3",
+        cnn = "Convext_tiny",
         weights = "DEFAULT",
-        name_model="glove_transformer_depth_4_head_n_8_drop_0_4_mobilnet.pkl")
+        name_model="glove_transformer_depth_3_head_n_4_drop_0_2.pkl")
     model = model_pipeline(config)
 
