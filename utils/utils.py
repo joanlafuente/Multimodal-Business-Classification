@@ -59,29 +59,36 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
     for i, img_name in tqdm(enumerate(anotations.index)):
         if i % 3000 == 0:
             print("Processed {} images out of {}".format(i, len(anotations.index)))
+        
         words_OCR = anotations[anotations.index == img_name].values[0][0]
 
         words = np.zeros((max_n_words, dim_w2v))
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
         for word in list(set(words_OCR)):
-            if len(word) > 2:
+            if len(word) > 2 and word is not None:
                 if translate == True:
                     prev_word = word
-                    word = translator.translate(word, dest='en').text
-                    if prev_word != word:
-                        with open("translated_words.txt", "a") as f:
-                            f.write(prev_word + " --> " + word + "\n")
+                    if word.lower() not in vocab:
+                        try:
+                            word = translator.translate(word, dest='en').text
+                            # print(prev_word, word)
+                            # if prev_word != word:
+                            with open("translated_words.txt", "a") as f:
+                                f.write(prev_word + " --> " + word + "\n")
+                        except:
+                            pass
 
-                if approach == "fasttext":
-                    if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
-                        words[i,:] = w2v[word.lower()] # Comented when using fasttext
-                
-                else:
-                    if i < max_n_words: # Comented when using glove
-                        words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
-                        text_mask[i] = False
-                        i += 1
+                    if approach != "fasttext":
+                        if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
+                            words[i,:] = w2v[word.lower()] # Comented when using fasttext
+                            text_mask[i] = False
+                            i += 1
+                    else:
+                        if i < max_n_words: # Comented when using glove
+                            words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
+                            text_mask[i] = False
+                            i += 1
             
         anotation_vecs[img_name] = (words, text_mask)
     return anotation_vecs
@@ -114,7 +121,7 @@ def make(config, device="cuda"):
     ])
     
     print("Creating anotations...")
-    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext)
+    anotations = create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, translate = True)
     
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
