@@ -17,10 +17,10 @@ import fasttext
 import fasttext.util
 from googletrans import Translator
 
-# data_path = "/content/dlnn-project_ia-group_15/data/"
-# anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
-# img_dir = data_path + "JPEGImages"
-# txt_dir = data_path + "ImageSets/0"
+data_path = "/content/dlnn-project_ia-group_15/data/"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
 
 # data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
 # anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
