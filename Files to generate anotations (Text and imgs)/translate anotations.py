@@ -1,48 +1,97 @@
-# pip install langdetect googletrans==4.0.0-rc1
-
 import pandas as pd
 import numpy as np
 import pickle
-
-pip install langdetect googletrans==4.0.0-rc1
-
 from googletrans import Translator
+from tqdm.auto import tqdm # the difference between tqdm and tqdm.auto is that tqdm.auto automatically selects a proper tqdm wrapper depending on your environment. If you are in a Jupyter Notebook environment, tqdm.notebook.tqdm is used. Otherwise, tqdm.std.tqdm is used. 
+import gensim.downloader as api # why gensim.downloader could not be resolved? because it is not installed. pip install gensim
+from textblob import Word
 
-def translate_text(text, detect = False, target_language='en'):
-    translator = Translator()
-    if text != '' and text != ' ':
-        for lang in translator.detect(text):
-            print(lang.lang, lang.confidence)
-        # translation = translator.translate(text, dest=target_language)
-        # translation is a googletrans.models.TRanslated object with attributes:
 
-        # return translation.text
-    return text
+data_path = "C:/Users/Maria/OneDrive - UAB\Documentos/2º de IA/NN and Deep Learning/dlnn-project_ia-group_15/data/"
+anotation_path= r"C:\Users\Maria\OneDrive - UAB\Documentos\2º de IA\NN and Deep Learning\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
+path_fasttext = r"C:\Users\Maria\OneDrive - UAB\Documentos\2º de IA\NN and Deep Learning\cc.en.300.bin"
 
-# Example usage
-translator = Translator(service_urls=['translate.google.com'])
-ocr_text = "hola"
-print(translator.detect(ocr_text))
-for lang in translator.detect(ocr_text):
-    print(lang.lang, lang.confidence)
-translated_text = translate_text(ocr_text)
-
-print("Translated text:", translated_text)
-# why is the confidence None?
-# because the translation is not confident
-
-anotation_path = r"C:\Users\Maria\OneDrive - UAB\Documentos\2º de IA\NN and Deep Learning\dlnn-project_ia-group_15\anotations_keras.pkl"
 anotations = pd.read_pickle(anotation_path)
+print("loading anotations...")
+w2v = api.load('glove-wiki-gigaword-300')
+print("loaded w2v...")
+vocab = set(w2v.key_to_index.keys())
 
-# print all anotations that are not empty
-for i, img_name in enumerate(anotations.index[:100]):
-    words_OCR = anotations[anotations.index == img_name].iloc[0]
-    if len(words_OCR[0]) > 0:
-        print()
-        print(i, img_name, words_OCR[0])
-        for word in words_OCR[0]:
-            translated_text = translate_text(word)
-            if word != translated_text:
-                print(word, translated_text)
+translator = Translator()
 
-        
+anotation_vecs = {}
+correct = True
+translate = True
+
+with open("corrected_words.txt", "w") as f:
+    f.write("")
+
+with open("translated_words.txt", "w") as f:
+    f.write("")
+
+for i, img_name in tqdm(enumerate(anotations.index)):
+    if i % 100 == 0:
+        print("Processed {} images out of {}".format(i, len(anotations.index)))
+    
+    words_OCR = anotations[anotations.index == img_name].values[0][0]
+
+    i = 0
+    words_OCR_processed = []
+    for word in list(set(words_OCR)):
+        if len(word) > 2 and word is not None:
+            if correct:
+                if word.lower() not in vocab:
+                    prev_word = word
+                    word = str(Word(word).correct())
+                    if prev_word != word:
+                        with open("corrected_words.txt", "a") as f:
+                                    f.write(prev_word + " --> " + word + "\n")
+
+            if translate:
+                prev_word = word
+                
+                if word.lower() not in vocab:
+                    try:
+                        word = translator.translate(word, dest='en').text
+                        
+                        # print(prev_word, word)
+                        if prev_word != word:
+                            with open("translated_words.txt", "a") as f:
+                                f.write(prev_word + " --> " + word + "\n")
+                    except:
+                        pass
+
+        if word in vocab:
+            words_OCR_processed.append(word)
+    #save in a new dict the anotations with the corrected words
+    anotation_vecs[img_name] = words_OCR_processed
+
+    with open("anotations_translated_corrected.pkl", "wb") as f:
+        pickle.dump(anotation_vecs, f)
+
+
+
+#open anotations_corrected.pkl and save it in a dataframe
+import pandas as pd
+import pickle
+with open("anotations_translated_corrected.pkl", "rb") as f:
+    anotations = pickle.load(f)
+
+# iterate over the dict and save it in a dataframe
+tokens_imgs2 ={}
+for k,v in anotations.items():
+    if v == None: 
+        tokens_imgs2[k] = []
+    else:
+        tokens_imgs2[k] = [v]
+
+anotations = tokens_imgs2
+
+df_anotations = pd.DataFrame.from_dict(anotations, orient='index', columns=['text_detected'])
+
+
+print(df_anotations.head())
+
+df_anotations.to_pickle("anotations_translated_corrected.pkl")
