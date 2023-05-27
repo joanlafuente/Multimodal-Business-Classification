@@ -18,7 +18,7 @@ import fasttext.util
 from googletrans import Translator
 
 data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
@@ -64,7 +64,7 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         words = np.zeros((max_n_words, dim_w2v))
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
-        for word in list(set(words_OCR)):
+        for word in words_OCR:
             if len(word) > 2:
                 if translate == True:
                     prev_word = word
@@ -95,10 +95,20 @@ def make_loader(dataset, batch_size, shuffle=False):
                         pin_memory=True, num_workers=4)
     return loader
 
+def init_parameters(model):
+    for name, w in model.named_parameters():
+        if ("feature_extractor" not in name) and ("norm" not in name):
+            if ("weight" in name):
+                nn.init.xavier_normal_(w)
+            if "bias" in name:
+                nn.init.ones_(w)
+
+
 def make(config, device="cuda"):
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir
     input_size = 224
+    augment_data = True
     
     data_transforms_train = torchvision.transforms.Compose([
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
@@ -109,12 +119,23 @@ def make(config, device="cuda"):
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
-    
-    data_transforms_test = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-            torchvision.transforms.CenterCrop(input_size),
+
+    if augment_data:
+        data_transforms_train = torchvision.transforms.Compose([
+            # torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+            # torchvision.transforms.RandomResizedCrop(input_size),
+            # torchvision.transforms.RandomHorizontalFlip(),
+            # torchvision.transforms.RandomRotation(10),
+            # torchvision.transforms.TrivialAugmentWide(),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+    
+    data_transforms_test = torchvision.transforms.Compose([
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+        torchvision.transforms.CenterCrop(input_size),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     
     print("Creating anotations...")
@@ -123,8 +144,12 @@ def make(config, device="cuda"):
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
+    if augment_data:
+        train_img_names = [img_name.split(".")[0]+"-"+str(i)+".jpg" for img_name in train_img_names for i in range(5)]
+        y_train = [y for y in y_train for i in range(5)]
+
     # Creating the datasets and the loaders for the train, test and validation
-    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train)
+    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train, augment=augment_data)
     if type(config) == dict:
         train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)
     else:
@@ -147,7 +172,7 @@ def make(config, device="cuda"):
         model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
     else:
         model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
-    #
+    # init_parameters(model)
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
     if type(config) == dict:
@@ -158,49 +183,6 @@ def make(config, device="cuda"):
             model.parameters(), lr=config.learning_rate)
 
         return model, criterion, optimizer, train_loader, test_loader, val_loader
-    
-# def make_test(config, device="cuda"):
-#     # Make the data and model
-#     global data_path, anotation_path, img_dir, txt_dir
-#     input_size = 224
-    
-#     data_transforms_train = torchvision.transforms.Compose([
-#         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-#         torchvision.transforms.RandomResizedCrop(input_size),
-#         torchvision.transforms.RandomHorizontalFlip(),
-#         torchvision.transforms.ToTensor(),
-#         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-#     ])
-    
-#     data_transforms_test = torchvision.transforms.Compose([
-#             torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-#             torchvision.transforms.CenterCrop(input_size),
-#             torchvision.transforms.ToTensor(),
-#             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-#     ])
-#     # w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
-#     w2v = fasttext.load_model(r"C:\Users\Joan\Desktop\Deep_Learning_project\cc.en.300.bin")
-
-#     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
-#     # Load the labels of the images and split them into train, test and validation
-#     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
-#     # Creating the datasets and the loaders for the train, test and validation
-#     # Train
-#     train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, ocr_data, w2v, transform=data_transforms_train)
-#     train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)
-#     # Test
-#     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, ocr_data, w2v, transform=data_transforms_test)
-#     test_loader = make_loader(test_dataset, config["batch_size_val_test"])
-#     # Validation
-#     val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, ocr_data, w2v, transform=data_transforms_test)
-#     val_loader = make_loader(val_dataset, config["batch_size_val_test"])
-    
-#     # Make the model
-#     model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
-
-#     return model, train_loader, test_loader, val_loader
-    
-
 
 # It loads the labels of the images and split them into train, test and validation
 def load_labels_and_split(path_sets, random_state=42):
@@ -225,13 +207,15 @@ def load_labels_and_split(path_sets, random_state=42):
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
+
 class Dataset_ConText(Dataset):
-    def __init__(self, img_dir, img_list,labels_list, anotations, transform=None):
+    def __init__(self, img_dir, img_list,labels_list, anotations, transform=None, augment=False):
         self.img_dir = img_dir
         self.img_list = img_list
         self.labels_list = labels_list
         self.transform = transform
         self.anotations = anotations
+        self.augment = augment
 
     def __len__(self):
         return len(self.img_list)
@@ -240,8 +224,20 @@ class Dataset_ConText(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
+
         img_name = self.img_list[idx]
-        img  = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
+        if self.augment:
+            img  = Image.open(os.path.join(self.img_dir+"_augmented", img_name)).convert('RGB')
+            
+            if len(img_name.split("-")) > 1:
+                img_name = img_name.split("-")[0] + ".jpg"
+            else:
+                raise Exception("The image name is not correct", img_name)
+
+        else:
+            img  = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
+
+        
         label = self.labels_list[idx]
         words = self.anotations[img_name][0]
         text_mask = self.anotations[img_name][1]
