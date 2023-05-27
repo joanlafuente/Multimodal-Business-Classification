@@ -28,11 +28,11 @@ txt_dir = data_path + "ImageSets/0"
 # txt_dir = data_path + "ImageSets/0"
 # path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-# data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
-# anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
-# img_dir = data_path + r"\JPEGImages"
-# txt_dir = data_path + r"\ImageSets\0"
-# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
+anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + r"\JPEGImages"
+txt_dir = data_path + r"\ImageSets\0"
+path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 path_fasttext = ""
 # Comment the next 5 lines if you already have the model downloaded
 # print("Downloading fasttext model...")
@@ -64,7 +64,7 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         words = np.zeros((max_n_words, dim_w2v))
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
-        for word in list(set(words_OCR)):
+        for word in words_OCR:
             if len(word) > 2:
                 if translate == True:
                     prev_word = word
@@ -95,6 +95,15 @@ def make_loader(dataset, batch_size, shuffle=False):
                         pin_memory=True, num_workers=4)
     return loader
 
+def init_parameters(model):
+    for name, w in model.named_parameters():
+        if ("feature_extractor" not in name) and ("norm" not in name):
+            if ("weight" in name):
+                nn.init.xavier_normal_(w)
+            if "bias" in name:
+                nn.init.ones_(w)
+
+
 def make(config, device="cuda"):
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir
@@ -102,20 +111,28 @@ def make(config, device="cuda"):
     augment_data = True
     
     data_transforms_train = torchvision.transforms.Compose([
+<<<<<<< HEAD
         # torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
         # torchvision.transforms.RandomResizedCrop(input_size),
         # torchvision.transforms.RandomHorizontalFlip(),
         # torchvision.transforms.RandomRotation(10),
         # torchvision.transforms.TrivialAugmentWide(),
+=======
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+        torchvision.transforms.RandomResizedCrop(input_size),
+        torchvision.transforms.RandomHorizontalFlip(),
+        torchvision.transforms.RandomRotation(10),
+        torchvision.transforms.TrivialAugmentWide(),
+>>>>>>> 91c395e9fd547a44e38f13ecb5766040482274ed
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     
     data_transforms_test = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-            torchvision.transforms.CenterCrop(input_size),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+        torchvision.transforms.CenterCrop(input_size),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     
     print("Creating anotations...")
@@ -151,7 +168,7 @@ def make(config, device="cuda"):
         model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
     else:
         model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
-    #
+    init_parameters(model)
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
     if type(config) == dict:
