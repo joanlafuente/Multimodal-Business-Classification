@@ -220,7 +220,7 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
     def forward(self, img, txt, text_mask):
         batch_size = img.shape[0]
 
-        print(img[0, :, :, :].shape)
+        print(img[0, :, :, :].shape) # torch.Size([3, 384, 384])
         image_features = self.feature_extractor(img[0, :, :, :])
         # why RuntimeError: The size of tensor a (24) must match the size of tensor b (768) at non-singleton dimension 3?
         # because 
