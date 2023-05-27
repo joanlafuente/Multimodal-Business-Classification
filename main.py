@@ -58,6 +58,6 @@ if __name__ == "__main__":
         architecture="Transformer",
         cnn = "Convext_tiny",
         weights = "DEFAULT",
-        name_model="glove_transformer_depth_3_head_n_4_drop_0_25_inside_trans.pkl")
+        name_model="glove_transformer_depth_3_head_n_4_drop_0_25_more_transforms_and_init.pkl")
     model = model_pipeline(config)
 

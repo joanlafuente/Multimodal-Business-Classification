@@ -95,6 +95,15 @@ def make_loader(dataset, batch_size, shuffle=False):
                         pin_memory=True, num_workers=4)
     return loader
 
+def init_parameters(model):
+    for name, w in model.named_parameters():
+        if ("feature_extractor" not in name) and ("norm" not in name):
+            if ("weight" in name):
+                nn.init.xavier_normal_(w)
+            if "bias" in name:
+                nn.init.ones_(w)
+
+
 def make(config, device="cuda"):
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir
@@ -104,17 +113,17 @@ def make(config, device="cuda"):
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
         torchvision.transforms.RandomResizedCrop(input_size),
         torchvision.transforms.RandomHorizontalFlip(),
-        # torchvision.transforms.RandomRotation(10),
-        # torchvision.transforms.TrivialAugmentWide(),
+        torchvision.transforms.RandomRotation(10),
+        torchvision.transforms.TrivialAugmentWide(),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     
     data_transforms_test = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-            torchvision.transforms.CenterCrop(input_size),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+        torchvision.transforms.CenterCrop(input_size),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
     
     print("Creating anotations...")
@@ -147,7 +156,7 @@ def make(config, device="cuda"):
         model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
     else:
         model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
-    #
+    init_parameters(model)
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
     if type(config) == dict:
