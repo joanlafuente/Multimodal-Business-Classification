@@ -18,7 +18,7 @@ import fasttext.util
 from googletrans import Translator
 
 data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
