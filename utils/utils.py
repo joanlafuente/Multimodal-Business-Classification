@@ -111,22 +111,25 @@ def make(config, device="cuda"):
     augment_data = True
     
     data_transforms_train = torchvision.transforms.Compose([
-<<<<<<< HEAD
-        # torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-        # torchvision.transforms.RandomResizedCrop(input_size),
-        # torchvision.transforms.RandomHorizontalFlip(),
-        # torchvision.transforms.RandomRotation(10),
-        # torchvision.transforms.TrivialAugmentWide(),
-=======
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
         torchvision.transforms.RandomResizedCrop(input_size),
         torchvision.transforms.RandomHorizontalFlip(),
-        torchvision.transforms.RandomRotation(10),
-        torchvision.transforms.TrivialAugmentWide(),
->>>>>>> 91c395e9fd547a44e38f13ecb5766040482274ed
+        # torchvision.transforms.RandomRotation(10),
+        # torchvision.transforms.TrivialAugmentWide(),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
+
+    if augment_data:
+        data_transforms_train = torchvision.transforms.Compose([
+            # torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+            # torchvision.transforms.RandomResizedCrop(input_size),
+            # torchvision.transforms.RandomHorizontalFlip(),
+            # torchvision.transforms.RandomRotation(10),
+            # torchvision.transforms.TrivialAugmentWide(),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
     
     data_transforms_test = torchvision.transforms.Compose([
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
