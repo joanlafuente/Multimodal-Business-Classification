@@ -17,10 +17,10 @@ import fasttext
 import fasttext.util
 from googletrans import Translator
 
-data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
-img_dir = data_path + "JPEGImages"
-txt_dir = data_path + "ImageSets/0"
+# data_path = "/content/dlnn-project_ia-group_15/data/"
+# anotation_path= "/content/dlnn-project_ia-group_15/anotations_keras.pkl"
+# img_dir = data_path + "JPEGImages"
+# txt_dir = data_path + "ImageSets/0"
 
 # data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
 # anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
@@ -28,11 +28,11 @@ txt_dir = data_path + "ImageSets/0"
 # txt_dir = data_path + "ImageSets/0"
 # path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-# data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
-# anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
-# img_dir = data_path + r"\JPEGImages"
-# txt_dir = data_path + r"\ImageSets\0"
-# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+data_path = r"C:\Users\Joan\Desktop\Deep_Learning_project\features\data"
+anotation_path= r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + r"\JPEGImages"
+txt_dir = data_path + r"\ImageSets\0"
+path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 path_fasttext = ""
 # Comment the next 5 lines if you already have the model downloaded
 # print("Downloading fasttext model...")
@@ -64,7 +64,7 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         words = np.zeros((max_n_words, dim_w2v))
         text_mask = np.ones((max_n_words,), dtype=bool)
         i = 0
-        for word in list(set(words_OCR)):
+        for word in words_OCR:
             if len(word) > 2:
                 if translate == True:
                     prev_word = word
@@ -219,7 +219,7 @@ def load_labels_and_split(path_sets, random_state=42):
             all_img_names.append(image + ".jpg")
             all_y.append(key.split("_")[0])
 
-    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.4, stratify=all_y, random_state=random_state)
+    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.3, stratify=all_y, random_state=random_state)
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
