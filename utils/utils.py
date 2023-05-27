@@ -146,6 +146,7 @@ def make(config, device="cuda"):
     
     if augment_data:
         train_img_names = [img_name.split(".")[0]+"-"+str(i)+".jpg" for img_name in train_img_names for i in range(5)]
+        y_train = [y for y in y_train for i in range(5)]
 
     # Creating the datasets and the loaders for the train, test and validation
     train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train, augment=augment_data)
