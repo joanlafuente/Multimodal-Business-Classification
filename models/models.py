@@ -17,7 +17,8 @@ class Transformer(nn.Module):
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
-        self.dim_features_feature_extractor = 768 
+        self.dim_features_feature_extractor = 768 # convext_tiny
+        # self.dim_features_feature_extractor = 960 # mobilenet
         self.n_features_feature_extractor = 49 # 7x7
         self.dim_text_features = 300
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")

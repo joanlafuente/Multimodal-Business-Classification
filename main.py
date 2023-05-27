@@ -46,8 +46,8 @@ if __name__ == "__main__":
     config = dict(
         epochs=35,
         classes=28,
-        batch_size=20,
-        batch_size_val_test=30,
+        batch_size=100,
+        batch_size_val_test=100,
         learning_rate=0.00006,
         patience=10,
         heads=4,
@@ -56,7 +56,7 @@ if __name__ == "__main__":
         dropout=0.2,
         dataset="ConText",
         architecture="Transformer",
-        cnn = "convnext_tiny",
+        cnn = "Convext_tiny",
         weights = "DEFAULT",
         name_model="glove_transformer_depth_3_head_n_4_drop_0_2.pkl")
     model = model_pipeline(config)
