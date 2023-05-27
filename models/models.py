@@ -34,7 +34,7 @@ class Transformer(nn.Module):
         self.cls_token = nn.Parameter(torch.randn(1, 1, self.dim))
 
         # Transformer Encoder
-        encoder_layer = nn.TransformerEncoderLayer(d_model=self.dim, nhead=heads_transformer, dim_feedforward=dim_fc_transformer, batch_first=True)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=self.dim, nhead=heads_transformer, dim_feedforward=dim_fc_transformer, batch_first=True, dropout=drop)
         self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=depth_transformer)
 
         # Classification fc
