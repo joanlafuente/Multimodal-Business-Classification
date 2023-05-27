@@ -104,6 +104,8 @@ def make(config, device="cuda"):
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
         torchvision.transforms.RandomResizedCrop(input_size),
         torchvision.transforms.RandomHorizontalFlip(),
+        # torchvision.transforms.RandomRotation(10),
+        # torchvision.transforms.TrivialAugmentWide(),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
