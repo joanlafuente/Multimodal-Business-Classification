@@ -2,7 +2,7 @@ import torch.nn as nn
 import torchvision
 import torch
 import math
-from vit_pytorch import ViT # pip install vit-pytorch
+# from vit_pytorch import ViT # pip install vit-pytorch
 from pytorch_pretrained_vit import ViT # pip install pytorch-pretrained-vit
 
 # from einops import rearrange
@@ -168,7 +168,7 @@ class Transformer_positional_encoding_not_learned(nn.Module):
 # Trying to use ViT (visual transformer) instead of CNN for the image features
 class Transformer_positional_encoding_not_learned_ViT(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer, drop=0.1):
-        super(Transformer_positional_encoding_not_learned, self).__init__()
+        super(Transformer_positional_encoding_not_learned_ViT, self).__init__()
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -186,7 +186,7 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
         
-        self.dim_features_feature_extractor = 0
+        self.dim_features_feature_extractor = 1000
         self.n_features_feature_extractor = 49 # 7x7
         self.dim_text_features = 300 # dim text embedding vectors
         
@@ -197,7 +197,7 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
         self.text_features_embed = nn.Linear(self.dim_text_features, self.dim)
         
         # self.cnn_features_embed = nn.Linear(self.n_features_feature_extractor, self.dim)
-        # self.vit_features_embed = nn.Linear(self.dim_features_feature_extractor, self.dim)
+        self.vit_features_embed = nn.Linear(self.dim_features_feature_extractor, self.dim)
         # self.ViT = ViT(image_size = 256, patch_size = 32, num_classes = 1000, dim = 1024, depth = 6, heads = 16, mlp_dim = 2048, dropout = 0.1, emb_dropout = 0.1)
 
         # Positional embedding for the image features
@@ -220,11 +220,15 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
     def forward(self, img, txt, text_mask):
         batch_size = img.shape[0]
 
-        image_features = self.feature_extractor(img)
+        print(img[0, :, :, :].shape)
+        image_features = self.feature_extractor(img[0, :, :, :])
+        # why RuntimeError: The size of tensor a (24) must match the size of tensor b (768) at non-singleton dimension 3?
+        # because 
         print(image_features.shape)
         image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
         print(image_features.shape)
-        # image_features = self.cnn_features_embed(image_features) 
+        image_features = self.vit_features_embed(image_features)
+        print(image_features.shape)
 
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
         x = torch.cat((cls_tokens, image_features), dim=1)

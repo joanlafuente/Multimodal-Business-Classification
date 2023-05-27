@@ -17,22 +17,22 @@ import fasttext
 import fasttext.util
 from googletrans import Translator
 
-data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
-img_dir = data_path + "JPEGImages"
-txt_dir = data_path + "ImageSets/0"
-
-# data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-# anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+# data_path = "/content/dlnn-project_ia-group_15/data/"
+# anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
 # img_dir = data_path + "JPEGImages"
 # txt_dir = data_path + "ImageSets/0"
-# path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
-anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_keras.pkl"
-img_dir = data_path + r"\JPEGImages"
-txt_dir = data_path + r"\ImageSets\0"
-path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
+anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+img_dir = data_path + "JPEGImages"
+txt_dir = data_path + "ImageSets/0"
+path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
+
+# data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
+# anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_keras.pkl"
+# img_dir = data_path + r"\JPEGImages"
+# txt_dir = data_path + r"\ImageSets\0"
+# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 path_fasttext = ""
 # Comment the next 5 lines if you already have the model downloaded
 # print("Downloading fasttext model...")
@@ -66,12 +66,12 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         i = 0
         for word in words_OCR:
             if len(word) > 2:
-                if translate == True:
-                    prev_word = word
-                    word = translator.translate(word, dest='en').text
-                    if prev_word != word:
-                        with open("translated_words.txt", "a") as f:
-                            f.write(prev_word + " --> " + word + "\n")
+                # if translate == True:
+                #     prev_word = word
+                #     word = translator.translate(word, dest='en').text
+                #     if prev_word != word:
+                #         with open("translated_words.txt", "a") as f:
+                #             f.write(prev_word + " --> " + word + "\n")
 
                 if approach == "glove":
                     if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
@@ -79,11 +79,11 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
                         text_mask[i] = False
                         i += 1
                 
-                else:
-                    if i < max_n_words: # Comented when using glove
-                        words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
-                        text_mask[i] = False
-                        i += 1
+                # else:
+                #     if i < max_n_words: # Comented when using glove
+                #         words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
+                #         text_mask[i] = False
+                #         i += 1
             
         anotation_vecs[img_name] = (words, text_mask)
     return anotation_vecs
@@ -107,8 +107,8 @@ def init_parameters(model):
 def make(config, device="cuda"):
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir
-    input_size = 224
-    augment_data = True
+    input_size = 384
+    augment_data = False
     
     data_transforms_train = torchvision.transforms.Compose([
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
@@ -169,9 +169,9 @@ def make(config, device="cuda"):
     
     # Make the model
     if type(config) == dict:
-        model = Transformer_positional_encoding_not_learned(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+        model = Transformer_positional_encoding_not_learned_ViT(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
     else:
-        model = Transformer_positional_encoding_not_learned(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
+        model = Transformer_positional_encoding_not_learned_ViT(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
     # init_parameters(model)
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
