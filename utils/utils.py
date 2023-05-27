@@ -149,9 +149,7 @@ def make(config, device="cuda"):
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
     if type(config) == dict:
-        optimizer = torch.optim.Adam(
-            model.parameters(), lr=config["learning_rate"])
-        return model, criterion, optimizer, train_loader, test_loader, val_loader
+        return model, train_loader, test_loader, val_loader
     
     else:
         optimizer = torch.optim.Adam(
