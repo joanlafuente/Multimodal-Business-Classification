@@ -53,11 +53,11 @@ if __name__ == "__main__":
         heads=4,
         depth=3,
         fc_transformer=350,
-        dropout=0.2,
+        dropout=0.25,
         dataset="ConText",
         architecture="Transformer",
         cnn = "Convext_tiny",
         weights = "DEFAULT",
-        name_model="glove_transformer_depth_3_head_n_4_drop_0_2_acorrected_and_translated_fixed_with_data_augmentation.pkl")
+        name_model="positional_encoding_changed_anotations_translated.pkl")
     model = model_pipeline(config)
 
