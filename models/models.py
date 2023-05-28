@@ -2,8 +2,8 @@ import torch.nn as nn
 import torchvision
 import torch
 import math
-from vit_pytorch import ViT # pip install vit-pytorch
-from pytorch_pretrained_vit import ViT # pip install pytorch-pretrained-vit
+# from vit_pytorch import ViT # pip install vit-pytorch
+# from pytorch_pretrained_vit import ViT # pip install pytorch-pretrained-vit
 
 # from einops import rearrange
 # Conventional and convolutional neural network
