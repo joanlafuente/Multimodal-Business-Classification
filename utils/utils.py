@@ -13,11 +13,11 @@ from PIL import Image
 from models.models import *
 import gensim.downloader as api
 import pickle
-import fasttext
-import fasttext.util
+# import fasttext
+# import fasttext.util
 
 data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
@@ -131,6 +131,7 @@ def make(config, device="cuda"):
             torchvision.transforms.RandomResizedCrop(input_size, scale=(0.8, 1.0)),
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.ToTensor(),
+            torchvision.transforms.RandomRotation(10),
             torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     
