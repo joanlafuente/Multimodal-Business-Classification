@@ -15,7 +15,6 @@ import gensim.downloader as api
 import pickle
 import fasttext
 import fasttext.util
-from googletrans import Translator
 
 data_path = "/content/dlnn-project_ia-group_15/data/"
 anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
@@ -34,58 +33,59 @@ txt_dir = data_path + "ImageSets/0"
 # txt_dir = data_path + r"\ImageSets\0"
 # path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 path_fasttext = ""
-# Comment the next 5 lines if you already have the model downloaded
-# print("Downloading fasttext model...")
-# fasttext.util.download_model('en', if_exists='ignore')  
 
-# print("Moving model to" + path_fasttext + "...")
-# os.rename("./cc.en.300.bin", path_fasttext)
 
-def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", translate = False):
-    # fasttext.util.download_model('en', if_exists='ignore')  # English
-
+def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove"):
+    # Read the file with the text anotations
     anotations = pd.read_pickle(anotation_path)
+
     if approach == "fasttext":
+        # Download the fasttext model and load it
+        if not os.path.isfile(path_fasttext):
+            print("Downloading fasttext model...")
+            fasttext.util.download_model('en', if_exists='ignore')
+            os.rename("./cc.en.300.bin", path_fasttext)
+
         w2v = fasttext.load_model(path_fasttext)
     
     else:
+        # Download the glove model and load it
         w2v = api.load('glove-wiki-gigaword-300')
-        vocab = set(w2v.key_to_index.keys()) # Comented when using fasttext
-
-    if translate:
-        translator = Translator()
+        vocab = set(w2v.key_to_index.keys()) # words with embedding in glove
 
     anotation_vecs = {}
     for i, img_name in tqdm(enumerate(anotations.index)):
         if i % 3000 == 0:
             print("Processed {} images out of {}".format(i, len(anotations.index)))
+        
+        # Read the list of text anotation of the image
         words_OCR = anotations[anotations.index == img_name].values[0][0]
 
+        # For each image we create a matrix of dim (max_n_words, dim_w2v) with the embeddings of the words
+        # and a mask to avoid the padding later
+        i = 0
         words = np.zeros((max_n_words, dim_w2v))
         text_mask = np.ones((max_n_words,), dtype=bool)
-        i = 0
         for word in words_OCR:
-            if len(word) > 2:
-                # if translate == True:
-                #     prev_word = word
-                #     word = translator.translate(word, dest='en').text
-                #     if prev_word != word:
-                #         with open("translated_words.txt", "a") as f:
-                #             f.write(prev_word + " --> " + word + "\n")
-
-                if approach == "glove":
-                    if (word.lower() in vocab) and (i < max_n_words): # Comented when using fasttext
-                        words[i,:] = w2v[word.lower()] # Comented when using fasttext
+            if i < max_n_words:
+                if len(word) > 2:  # Remove words with less than 2 characters
+                    
+                    if approach == "glove": 
+                        if (word.lower() in vocab): # We need to check if the word is in the vocabulary of glove
+                            words[i,:] = w2v[word.lower()]
+                            text_mask[i] = False
+                            i += 1
+                    
+                    else:
+                        words[i,:] = w2v.get_word_vector(word.lower())
                         text_mask[i] = False
                         i += 1
-                
-                # else:
-                #     if i < max_n_words: # Comented when using glove
-                #         words[i,:] = w2v.get_word_vector(word.lower())  # Comented when using glove
-                #         text_mask[i] = False
-                #         i += 1
+            else:
+                break
             
+        # Save the matrix and the mask in a dictionary with the image name as key
         anotation_vecs[img_name] = (words, text_mask)
+
     return anotation_vecs
 
 def make_loader(dataset, batch_size, shuffle=False):
@@ -93,9 +93,12 @@ def make_loader(dataset, batch_size, shuffle=False):
                         batch_size=batch_size, 
                         shuffle=shuffle,
                         pin_memory=True, num_workers=4)
+    
+    # returns the loader for the dataset given
     return loader
 
 def init_parameters(model):
+    # Initialize the parameters of the model 
     for name, w in model.named_parameters():
         if ("feature_extractor" not in name) and ("norm" not in name):
             if ("weight" in name):
@@ -103,100 +106,102 @@ def init_parameters(model):
             if "bias" in name:
                 nn.init.ones_(w)
 
-
 def make(config, device="cuda"):
-    # Make the data and model
-    global data_path, anotation_path, img_dir, txt_dir
-    input_size = 224
-    augment_data = False
-    
-    data_transforms_train = torchvision.transforms.Compose([
-        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-        torchvision.transforms.RandomResizedCrop(input_size),
-        torchvision.transforms.RandomHorizontalFlip(),
-        # torchvision.transforms.RandomRotation(10),
-        # torchvision.transforms.TrivialAugmentWide(),
-        torchvision.transforms.ToTensor(),
-        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-    ])
+    # Prepare data, create model, optimizer and criterion from config.
 
-    if augment_data:
-        data_transforms_train = torchvision.transforms.Compose([
-            # torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-            # torchvision.transforms.RandomResizedCrop(input_size),
-            # torchvision.transforms.RandomHorizontalFlip(),
-            # torchvision.transforms.RandomRotation(10),
-            # torchvision.transforms.TrivialAugmentWide(),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+    global data_path, anotation_path, img_dir, txt_dir
     
+    input_size = 224 # size of the model input images
+    augment_data = False # augment the dataset by using more than one transformed image per original image
+
     data_transforms_test = torchvision.transforms.Compose([
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
         torchvision.transforms.CenterCrop(input_size),
         torchvision.transforms.ToTensor(),
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
+
+    if augment_data:
+        # in case of augmenting the data, the test transformations are used for the train data since the data was already transformed
+        data_transforms_train = data_transforms_test 
     
+    else:
+        data_transforms_train = torchvision.transforms.Compose([
+            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+            torchvision.transforms.RandomResizedCrop(input_size, scale=(0.8, 1.0)),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        ])
+    
+    # get the anotations (text) of images
     print("Creating anotations...")
     anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext)
-    # anotations = None
 
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
     if augment_data:
-        train_img_names = [img_name.split(".")[0]+"-"+str(i)+".jpg" for img_name in train_img_names for i in range(5)]
-        y_train = [y for y in y_train for i in range(5)]
+        n_images_per_image_to_augment = 5
+
+        # This just creates a list of the same image names but with a number at the end e.g. "img-1.jpg", "img-2.jpg", etc. since that is how they were saved
+        train_img_names = [img_name.split(".")[0]+"-"+str(i)+".jpg" for img_name in train_img_names for i in range(n_images_per_image_to_augment)]
+        
+        # For the labels, we just repeat the same label n_images_per_image_to_augment times since they will have the same label
+        y_train = [y for y in y_train for i in range(n_images_per_image_to_augment)]
 
     # Creating the datasets and the loaders for the train, test and validation
     train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train, augment=augment_data)
-    if type(config) == dict:
-        train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)
-    else:
-        train_loader = make_loader(train_dataset, config.batch_size, shuffle=True)
-
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, anotations, transform=data_transforms_test)
-    if type(config) == dict:
-        test_loader = make_loader(test_dataset, config["batch_size_val_test"])
-    else:
-        test_loader = make_loader(test_dataset, config.batch_size_val_test)
-    
     val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, anotations, transform=data_transforms_test)
-    if type(config) == dict:
+
+    if type(config) == dict: # We check if the config is a dictionary or a wandb object to make the code compatible with both
+        train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)    
+        test_loader = make_loader(test_dataset, config["batch_size_val_test"])
         val_loader = make_loader(val_dataset, config["batch_size_val_test"])
-    else:
-        val_loader = make_loader(val_dataset, config.batch_size_val_test)
-    
-    # Make the model
-    if type(config) == dict:
+        
         model = Transformer_positional_encoding_not_learned(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
-    else:
-        model = Transformer_positional_encoding_not_learned(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
-    # init_parameters(model)
-    #  Make the loss and optimizer
-    criterion = nn.CrossEntropyLoss()
-    if type(config) == dict:
+        
+        # Initialize the parameters of the model, It is commented because it gave worse results
+        # init_parameters(model) 
+
+        # Make the loss and optimizer
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
+        
         return model, train_loader, test_loader, val_loader
     
     else:
-        optimizer = torch.optim.Adam(
-            model.parameters(), lr=config.learning_rate)
+        train_loader = make_loader(train_dataset, config.batch_size, shuffle=True)
+        test_loader = make_loader(test_dataset, config.batch_size_val_test)
+        val_loader = make_loader(val_dataset, config.batch_size_val_test)
+        
+        model = Transformer_positional_encoding_not_learned(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
+        
+        # Initialize the parameters of the model, It is commented because it gave worse results
+        # init_parameters(model) 
 
+        # Make the loss and optimizer
+        criterion = nn.CrossEntropyLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
+        
         return model, criterion, optimizer, train_loader, test_loader, val_loader
-
-# It loads the labels of the images and split them into train, test and validation
+    
 def load_labels_and_split(path_sets, random_state=42):
+    # Load the labels of the images and split them into train, test and validation
+
     list_sets = os.listdir(path_sets)
     images_class = {}
 
-    # Load the labels of the images and split them into train, test and validation
+    # Get the list of names of images for each class
     for set_filename in list_sets:
-        if "_" in set_filename:
+        if "_" in set_filename: # to avoid the all.txt file
             with open(path_sets + "/" + set_filename, "r") as file:
                 file_text = file.read().splitlines()
             images_class[set_filename] = [row.split()[0] for row in file_text if row.split()[1] == "1"]
     
+
+    # Join all the images and labels in a single list and split them into train, test and validation
     all_img_names = []
     all_y = []
     for key in images_class.keys():
@@ -208,8 +213,8 @@ def load_labels_and_split(path_sets, random_state=42):
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
-
 class Dataset_ConText(Dataset):
+    # Dataset class for the ConText dataset
     def __init__(self, img_dir, img_list,labels_list, anotations, transform=None, augment=False):
         self.img_dir = img_dir
         self.img_list = img_list
@@ -225,9 +230,9 @@ class Dataset_ConText(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
 
-
         img_name = self.img_list[idx]
-        if self.augment:
+        
+        if self.augment: # if augment is set to True, then the images are grabbed from the augmented folder
             img  = Image.open(os.path.join(self.img_dir+"_augmented", img_name)).convert('RGB')
             
             if len(img_name.split("-")) > 1:
@@ -241,18 +246,19 @@ class Dataset_ConText(Dataset):
         
         label = self.labels_list[idx]
         words = self.anotations[img_name][0]
-        # words = [0 for i in range(300)]
         text_mask = self.anotations[img_name][1]
-        # text_mask = np.zeros((40))
 
+        # aply the transformations to the image
         if self.transform:
             img = self.transform(img)
 
+        # for each idx we return the image, the label, the words and the text mask
         return (int(label)-1), img, np.array(words), text_mask
-    
 
-# Not optimizing CNN helper functions and clases
+
+# NOT OPTIMIZING CNN HELPER FUNCTIONS AND CLASSES
 class Dataset_imgs(Dataset):
+    # used to extract the features from the images using the CNN
     def __init__(self, img_dir, img_list, labels_list, transform=None):
         self.img_dir = img_dir
         self.img_list = img_list
@@ -272,10 +278,12 @@ class Dataset_imgs(Dataset):
 
         if self.transform:
             img = self.transform(img)
-    
+
+        # return the image and the label
         return (int(label)-1), img, img_name
 
 class Dataset_ConText_Features(Dataset):
+    # since the features from the image are already extracted, we can use this class to load them
     def __init__(self, img_dir, data, anotations, embed):
         self.img_dir = img_dir
         self.img_list = data["img_names"]
@@ -300,7 +308,6 @@ class Dataset_ConText_Features(Dataset):
         label = self.labels_list[idx]
         words_OCR = self.anotations[self.anotations.index == img_name].iloc[0]
 
-
         words = np.zeros((self.max_n_words, self.dim_w2v))
         text_mask = np.ones((self.max_n_words,), dtype=bool)
         i = 0
@@ -314,22 +321,27 @@ class Dataset_ConText_Features(Dataset):
         return int(label), img_features, np.array(words), text_mask
     
 def make_features(config, device="cuda"):
-    # Make the data and model
-    global data_path, anotation_path, img_dir, txt_dir
+    """ 
+    The difference with the main "make" function is that here we already extracted the features from the images 
+    using the CNN so we just need to load them and create the datasets and loaders 
+    """
+    
+    global data_path, anotation_path, img_dir, txt_dir, path_features
+    
     w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
     # Load the labels of the images and split them into train, test and validation
     with open(path_features, "rb") as f:
         data = pickle.load(f)
+    
     # Creating the datasets and the loaders for the train, test and validation
-    # Train
     train_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["train"], anotations=ocr_data, embed=w2v)
     train_loader = make_loader(train_dataset, config.batch_size, shuffle=True)
-    # Test
+
     test_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["test"], anotations=ocr_data, embed=w2v)
     test_loader = make_loader(test_dataset, config.batch_size_val_test)
-    # Validation
+
     val_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["val"], anotations=ocr_data, embed=w2v)
     val_loader = make_loader(val_dataset, config.batch_size_val_test)
     
@@ -338,34 +350,32 @@ def make_features(config, device="cuda"):
 
     # Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(
-        model.parameters(), lr=config.learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
 
     return model, criterion, optimizer, train_loader, test_loader, val_loader
 
 def make_features_test(config, device="cuda"):
     # Make the data and model
-    global data_path, anotation_path, img_dir, txt_dir
+    global data_path, anotation_path, img_dir, txt_dir, path_features
     w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
 
     ocr_data = pd.read_pickle(anotation_path) # Open the data with the data of the OCR
+    
     # Load the labels of the images and split them into train, test and validation
     with open(path_features, "rb") as f:
         data = pickle.load(f)
+    
     # Creating the datasets and the loaders for the train, test and validation
-    # Train
     train_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["train"], anotations=ocr_data, embed=w2v)
     train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)
-    # Test
+
     test_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["test"], anotations=ocr_data, embed=w2v)
     test_loader = make_loader(test_dataset, config["batch_size_val_test"])
-    # Validation
+
     val_dataset = Dataset_ConText_Features(img_dir=img_dir, data=data["val"], anotations=ocr_data, embed=w2v)
     val_loader = make_loader(val_dataset, config["batch_size_val_test"])
     
-    # Make the model
     model = Transformer_without_extracting_features(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
-
 
     return model, train_loader, test_loader, val_loader
     
