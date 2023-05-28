@@ -2,6 +2,9 @@ import torch.nn as nn
 import torchvision
 import torch
 import math
+# from vit_pytorch import ViT # pip install vit-pytorch
+from pytorch_pretrained_vit import ViT # pip install pytorch-pretrained-vit
+
 # from einops import rearrange
 # Conventional and convolutional neural network
 
@@ -162,6 +165,88 @@ class Transformer_positional_encoding_not_learned(nn.Module):
         return x
     
 
+# Trying to use ViT (visual transformer) instead of CNN for the image features
+class Transformer_positional_encoding_not_learned_ViT(nn.Module):
+    def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer, drop=0.1):
+        super(Transformer_positional_encoding_not_learned_ViT, self).__init__()
+        
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+        # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+        
+        # modules=list(full_cnn.children())[:-2]
+        # self.feature_extractor=nn.Sequential(*modules)
+        # for param in self.feature_extractor.parameters():
+        #     param.requires_grad = True
+        weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1
+        full_ViT = torchvision.models.vit_b_16(weights = weights)
+        
+        modules=list(full_ViT.children())[:-2]
+        self.feature_extractor=nn.Sequential(*modules)
+        for param in self.feature_extractor.parameters():
+            param.requires_grad = True
+        
+        self.dim_features_feature_extractor = 768
+        self.n_features_feature_extractor = 24*24 # 7x7
+        self.dim_text_features = 300 # dim text embedding vectors
+        
+        
+        self.dim = 360 # Dimension in which the images and text are embedded
+
+        # Embed for the text features
+        self.text_features_embed = nn.Linear(self.dim_text_features, self.dim)
+        
+        # self.cnn_features_embed = nn.Linear(self.n_features_feature_extractor, self.dim)
+        self.vit_features_embed = nn.Linear(self.dim_features_feature_extractor, self.dim)
+        # self.ViT = ViT(image_size = 256, patch_size = 32, num_classes = 1000, dim = 1024, depth = 6, heads = 16, mlp_dim = 2048, dropout = 0.1, emb_dropout = 0.1)
+
+        # Positional embedding for the image features
+        self.pos_embedding = PositionalEncoder(self.dim, self.dim_features_feature_extractor + 1, self.device)
+        self.cls_token = nn.Parameter(torch.randn(1, 1, self.dim))
+
+        # Transformer Encoder
+        encoder_layer = nn.TransformerEncoderLayer(d_model=self.dim, nhead=heads_transformer, dim_feedforward=dim_fc_transformer, batch_first=True, dropout=drop)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=depth_transformer)
+
+        # Classification fc
+        self.fc = nn.Sequential(
+            nn.Dropout(drop),
+            nn.Linear(self.dim, dim_fc_transformer),
+            nn.Dropout(drop),
+            nn.GELU(),
+            nn.Linear(dim_fc_transformer, num_classes)
+        )
+
+    def forward(self, img, txt, text_mask):
+        batch_size = img.shape[0]
+
+        # print(img.shape) # torch.Size([3, 384, 384])
+        image_features = self.feature_extractor(img)
+        # print(image_features.shape)
+        image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor)
+        # print(image_features.shape)
+        image_features = self.vit_features_embed(image_features)
+        # print(image_features.shape)
+
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1)
+        x = torch.cat((cls_tokens, image_features), dim=1)
+        x = self.pos_embedding(x)
+
+        text_features = self.text_features_embed(txt.float())
+        x = torch.cat((x, text_features), dim=1)
+
+        tmp_mask = torch.zeros((img.shape[0], 1+self.n_features_feature_extractor), dtype=torch.bool).to(self.device)
+        mask = torch.cat((tmp_mask, text_mask), dim=1)
+        x = self.transformer(x, src_key_padding_mask=mask)
+        # x = self.transformer(x)
+
+        x = x[:, 0]
+        x = self.fc(x)
+        return x
+    
+
+
+
 
 class Feature_Extractor(nn.Module):
     def __init__(self):
@@ -175,7 +260,6 @@ class Feature_Extractor(nn.Module):
     def forward(self, img):
         x = self.feature_extractor(img)
         return x
-
 
 class Transformer_without_extracting_features(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer):
