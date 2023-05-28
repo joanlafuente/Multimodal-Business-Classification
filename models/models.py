@@ -2,34 +2,36 @@ import torch.nn as nn
 import torchvision
 import torch
 import math
-# from vit_pytorch import ViT # pip install vit-pytorch
-# from pytorch_pretrained_vit import ViT # pip install pytorch-pretrained-vit
 
-# from einops import rearrange
-# Conventional and convolutional neural network
 
 class Transformer(nn.Module):
     def __init__(self, num_classes, depth_transformer, heads_transformer, dim_fc_transformer, drop=0.1):
         super(Transformer, self).__init__()
 
+        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        
         full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
+
+        # OTHER OPTIONS TRIED FOR THE VISUAL FEATURES EXTRACTION
         # full_cnn = torchvision.models.mobilenet_v3_large(weights="DEFAULT")
         # weights = torchvision.models.RegNet_Y_16GF_Weights.IMAGENET1K_V2
         # full_cnn  = torchvision.models.regnet_y_16gf(weights=weights) # output 3024
         # full_cnn = torchvision.models.efficientnet_b0(weights="DEFAULT")
+        
+        # Set the CNN to be trainable by setting requires_grad to True
         modules=list(full_cnn.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
-        self.dim_features_feature_extractor = 768 # convext_tiny
-        # self.dim_features_feature_extractor = 960 # mobilenet
-        self.n_features_feature_extractor = 49 # 7x7
-        self.dim_text_features = 300
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        # Dimension in which the images and text are embedded
-        self.dim = 360
+        
+        # Dimension of the features extracted by the CNN
+        self.dim_features_feature_extractor = 768 # number of feature maps
+        self.n_features_feature_extractor = 49 # 7x7 size of the feature map
+        
+        self.dim_text_features = 300 # Dimension of the text features
+        self.dim = 360 # Dimension in which the images and text are embedded
 
-        # Embed for the text and image features
+        # Embedding for the text and image features
         self.cnn_features_embed = nn.Linear(self.n_features_feature_extractor, self.dim)
         self.text_features_embed = nn.Linear(self.dim_text_features, self.dim)
 
@@ -51,27 +53,32 @@ class Transformer(nn.Module):
         )
 
 
-
     def forward(self, img, txt, text_mask):
         batch_size = img.shape[0]
 
+        # Extract the features from the images, reshape and pass through a linear layer to have the correct dimension for the transformer
         image_features = self.feature_extractor(img)
         image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
         image_features = self.cnn_features_embed(image_features) 
 
+        # Add the positional embedding and the cls token to the image features
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
         x = torch.cat((cls_tokens, image_features), dim=1)
         x += self.pos_embedding
 
+        # Embed the text features and concatenate them to the image features
         text_features = self.text_features_embed(txt.float())
         x = torch.cat((x, text_features), dim=1)
 
+        # Create the mask for the transformer
         tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
         mask = torch.cat((tmp_mask, text_mask), dim=1)
+        
+        # Pass the features through the transformer
         x = self.transformer(x, src_key_padding_mask=mask)
-        # x = self.transformer(x)
 
-        x = x[:, 0]
+        # Get the cls token and pass it through the fc to get the right dimension for classification 
+        x = x[:, 0, :]
         x = self.fc(x)
         return x
     
