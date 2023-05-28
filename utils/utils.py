@@ -17,15 +17,15 @@ import fasttext
 import fasttext.util
 from googletrans import Translator
 
-# data_path = "/content/dlnn-project_ia-group_15/data/"
-# anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
-# img_dir = data_path + "JPEGImages"
-# txt_dir = data_path + "ImageSets/0"
-
-data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+data_path = "/content/dlnn-project_ia-group_15/data/"
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl"
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
+
+# data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
+# anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
+# img_dir = data_path + "JPEGImages"
+# txt_dir = data_path + "ImageSets/0"
 # path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
 # data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
@@ -170,9 +170,9 @@ def make(config, device="cuda"):
     
     # Make the model
     if type(config) == dict:
-        model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+        model = Transformer_positional_encoding_not_learned(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
     else:
-        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
+        model = Transformer_positional_encoding_not_learned(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
     # init_parameters(model)
     #  Make the loss and optimizer
     criterion = nn.CrossEntropyLoss()
