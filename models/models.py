@@ -178,16 +178,16 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
         # self.feature_extractor=nn.Sequential(*modules)
         # for param in self.feature_extractor.parameters():
         #     param.requires_grad = True
-        
-        full_ViT = ViT('B_16_imagenet1k', pretrained=True)
+        weights = torchvision.models.ViT_B_16_Weights.IMAGENET1K_SWAG_E2E_V1
+        full_ViT = torchvision.models.vit_b_16(weights = weights)
         
         modules=list(full_ViT.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
         
-        self.dim_features_feature_extractor = 1000
-        self.n_features_feature_extractor = 49 # 7x7
+        self.dim_features_feature_extractor = 768
+        self.n_features_feature_extractor = 24*24 # 7x7
         self.dim_text_features = 300 # dim text embedding vectors
         
         
@@ -220,15 +220,13 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
     def forward(self, img, txt, text_mask):
         batch_size = img.shape[0]
 
-        print(img[0, :, :, :].shape) # torch.Size([3, 384, 384])
-        image_features = self.feature_extractor(img[0, :, :, :])
-        # why RuntimeError: The size of tensor a (24) must match the size of tensor b (768) at non-singleton dimension 3?
-        # because 
-        print(image_features.shape)
-        image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
-        print(image_features.shape)
+        # print(img.shape) # torch.Size([3, 384, 384])
+        image_features = self.feature_extractor(img)
+        # print(image_features.shape)
+        image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor)
+        # print(image_features.shape)
         image_features = self.vit_features_embed(image_features)
-        print(image_features.shape)
+        # print(image_features.shape)
 
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
         x = torch.cat((cls_tokens, image_features), dim=1)
@@ -237,7 +235,7 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
         text_features = self.text_features_embed(txt.float())
         x = torch.cat((x, text_features), dim=1)
 
-        tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
+        tmp_mask = torch.zeros((img.shape[0], 1+self.n_features_feature_extractor), dtype=torch.bool).to(self.device)
         mask = torch.cat((tmp_mask, text_mask), dim=1)
         x = self.transformer(x, src_key_padding_mask=mask)
         # x = self.transformer(x)

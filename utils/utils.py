@@ -140,7 +140,8 @@ def make(config, device="cuda"):
     
     print("Creating anotations...")
     anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext)
-    
+    # anotations = None
+
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
@@ -240,7 +241,9 @@ class Dataset_ConText(Dataset):
         
         label = self.labels_list[idx]
         words = self.anotations[img_name][0]
+        # words = [0 for i in range(300)]
         text_mask = self.anotations[img_name][1]
+        # text_mask = np.zeros((40))
 
         if self.transform:
             img = self.transform(img)
