@@ -13,11 +13,14 @@ from PIL import Image
 from models.models import *
 import gensim.downloader as api
 import pickle
-# import fasttext
-# import fasttext.util
+import fasttext
+import fasttext.util
 
-data_path = "/content/dlnn-project_ia-group_15/data/"
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected.pkl"
+data_path = "/content/dlnn-project_ia-group_15/data/"  # Path to the data folder
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected.pkl" # Path to the pickle file with the words spotted in each image
+path_fasttext = ""  # Path to the fasttext model, if fasttext is used must be specified. The code will save the file in the path specified if it is not downloaded previously
+                    # In this case is an empty string as we are using "glove-wiki-gigaword-300" embedding
+
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
 
@@ -27,12 +30,12 @@ txt_dir = data_path + "ImageSets/0"
 # txt_dir = data_path + "ImageSets/0"
 # path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
-# data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
-# anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_keras.pkl"
-# img_dir = data_path + r"\JPEGImages"
-# txt_dir = data_path + r"\ImageSets\0"
-# path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
-path_fasttext = ""
+data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
+anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_keras.pkl"
+img_dir = data_path + r"\JPEGImages"
+txt_dir = data_path + r"\ImageSets\0"
+path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
+
 
 
 def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove"):
@@ -72,13 +75,13 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
                     
                     if approach == "glove": 
                         if (word.lower() in vocab): # We need to check if the word is in the vocabulary of glove
-                            words[i,:] = w2v[word.lower()]
-                            text_mask[i] = False
+                            words[i,:] = w2v[word.lower()] # Pass the word trohugh the embedding
+                            text_mask[i] = False # Set the mask to false, to take into account this word
                             i += 1
                     
                     else:
-                        words[i,:] = w2v.get_word_vector(word.lower())
-                        text_mask[i] = False
+                        words[i,:] = w2v.get_word_vector(word.lower()) # Pass the word trohugh the embedding
+                        text_mask[i] = False # Set the mask to false, to take into account this word
                         i += 1
             else:
                 break
@@ -137,7 +140,7 @@ def make(config, device="cuda"):
     
     # get the anotations (text) of images
     print("Creating anotations...")
-    anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext)
+    anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove")
 
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
@@ -156,28 +159,21 @@ def make(config, device="cuda"):
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, anotations, transform=data_transforms_test)
     val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, anotations, transform=data_transforms_test)
 
-    if type(config) == dict: # We check if the config is a dictionary or a wandb object to make the code compatible with both
+    if type(config) == dict: # We check if the config is a dictionary or a wandb object, this is to load the model also from a dict file, we do this during the testing of the model
         train_loader = make_loader(train_dataset, config["batch_size"], shuffle=True)    
         test_loader = make_loader(test_dataset, config["batch_size_val_test"])
         val_loader = make_loader(val_dataset, config["batch_size_val_test"])
         
         model = Transformer_positional_encoding_not_learned(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
         
-        # Initialize the parameters of the model, It is commented because it gave worse results
-        # init_parameters(model) 
-
-        # Make the loss and optimizer
-        criterion = nn.CrossEntropyLoss()
-        optimizer = torch.optim.Adam(model.parameters(), lr=config["learning_rate"])
-        
         return model, train_loader, test_loader, val_loader
     
-    else:
+    else: # When training the model, the config is a wandb object
         train_loader = make_loader(train_dataset, config.batch_size, shuffle=True)
         test_loader = make_loader(test_dataset, config.batch_size_val_test)
         val_loader = make_loader(val_dataset, config.batch_size_val_test)
         
-        model = Transformer_positional_encoding_not_learned(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
+        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
         
         # Initialize the parameters of the model, It is commented because it gave worse results
         # init_parameters(model) 
@@ -210,6 +206,8 @@ def load_labels_and_split(path_sets, random_state=42):
             all_img_names.append(image + ".jpg")
             all_y.append(key.split("_")[0])
 
+    # Split the data into train, test and validation, with stratified sampling to have a similar distribution of  each class in all the sets
+    # The partition is 70% train, 15% validation and 15% test
     train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.3, stratify=all_y, random_state=random_state)
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
@@ -242,14 +240,14 @@ class Dataset_ConText(Dataset):
                 raise Exception("The image name is not correct", img_name)
 
         else:
-            img  = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB')
+            img  = Image.open(os.path.join(self.img_dir, img_name)).convert('RGB') # convert to RGB because some images are in grayscale
 
         
         label = self.labels_list[idx]
         words = self.anotations[img_name][0]
         text_mask = self.anotations[img_name][1]
 
-        # aply the transformations to the image
+        # apply the transformations to the image
         if self.transform:
             img = self.transform(img)
 
@@ -258,8 +256,10 @@ class Dataset_ConText(Dataset):
 
 
 # NOT OPTIMIZING CNN HELPER FUNCTIONS AND CLASSES
+
+# A dataset class that gives the img, label, and the image name
+# We used it to extract the features from the images using a CNN, as a feature extractor
 class Dataset_imgs(Dataset):
-    # used to extract the features from the images using the CNN
     def __init__(self, img_dir, img_list, labels_list, transform=None):
         self.img_dir = img_dir
         self.img_list = img_list
@@ -283,6 +283,7 @@ class Dataset_imgs(Dataset):
         # return the image and the label
         return (int(label)-1), img, img_name
 
+# This is a dataset class for the ConText dataset, but in this case it is used when the features from the images are already extracted
 class Dataset_ConText_Features(Dataset):
     # since the features from the image are already extracted, we can use this class to load them
     def __init__(self, img_dir, data, anotations, embed):
@@ -309,6 +310,8 @@ class Dataset_ConText_Features(Dataset):
         label = self.labels_list[idx]
         words_OCR = self.anotations[self.anotations.index == img_name].iloc[0]
 
+        # Preprocess the words
+        # As this is based in a previous version in which we processeed the words in the dataset class
         words = np.zeros((self.max_n_words, self.dim_w2v))
         text_mask = np.ones((self.max_n_words,), dtype=bool)
         i = 0
@@ -356,6 +359,11 @@ def make_features(config, device="cuda"):
     return model, criterion, optimizer, train_loader, test_loader, val_loader
 
 def make_features_test(config, device="cuda"):
+    """
+    This function is used to load the dataloaders, and the model for the test.
+    We discarded the idea of extracting features of the images before hand. So, this function is a past version,
+    for this reason it is not incorporated in the "make_features" function, as in the first make of this file.
+    """
     # Make the data and model
     global data_path, anotation_path, img_dir, txt_dir, path_features
     w2v = api.load('glove-wiki-gigaword-300') # Initialize the embeding
