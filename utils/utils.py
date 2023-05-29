@@ -124,19 +124,14 @@ def make(config, device="cuda"):
         torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ])
 
-    if augment_data:
-        # in case of augmenting the data, the test transformations are used for the train data since the data was already transformed
-        data_transforms_train = data_transforms_test 
-    
-    else:
-        data_transforms_train = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
-            torchvision.transforms.RandomResizedCrop(input_size, scale=(0.8, 1.0)),
-            torchvision.transforms.RandomHorizontalFlip(),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.RandomRotation(10),
-            torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
+    data_transforms_train = torchvision.transforms.Compose([
+        torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
+        torchvision.transforms.RandomResizedCrop(input_size, scale=(0.8, 1.0)),
+        torchvision.transforms.RandomHorizontalFlip(),
+        torchvision.transforms.ToTensor(),
+        torchvision.transforms.RandomRotation(10),
+        torchvision.transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+    ])
     
     # get the anotations (text) of images
     print("Creating anotations...")
@@ -145,15 +140,6 @@ def make(config, device="cuda"):
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
-    if augment_data:
-        n_images_per_image_to_augment = 5
-
-        # This just creates a list of the same image names but with a number at the end e.g. "img-1.jpg", "img-2.jpg", etc. since that is how they were saved
-        train_img_names = [img_name.split(".")[0]+"-"+str(i)+".jpg" for img_name in train_img_names for i in range(n_images_per_image_to_augment)]
-        
-        # For the labels, we just repeat the same label n_images_per_image_to_augment times since they will have the same label
-        y_train = [y for y in y_train for i in range(n_images_per_image_to_augment)]
-
     # Creating the datasets and the loaders for the train, test and validation
     train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train, augment=augment_data)
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, anotations, transform=data_transforms_test)
@@ -164,7 +150,7 @@ def make(config, device="cuda"):
         test_loader = make_loader(test_dataset, config["batch_size_val_test"])
         val_loader = make_loader(val_dataset, config["batch_size_val_test"])
         
-        model = Transformer_positional_encoding_not_learned(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+        model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
         
         return model, train_loader, test_loader, val_loader
     
