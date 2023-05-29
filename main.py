@@ -46,8 +46,8 @@ if __name__ == "__main__":
     config = dict(
         epochs=35,
         classes=28,
-        batch_size=163,
-        batch_size_val_test=163,
+        batch_size=20,
+        batch_size_val_test=30,
         learning_rate=0.00006,
         patience=10,
         heads=4,
@@ -58,6 +58,6 @@ if __name__ == "__main__":
         architecture="Transformer",
         cnn = "Convext_tiny",
         weights = "DEFAULT",
-        name_model="positional_encoding_changed_anotations_translated.pkl")
+        name_model="positional_encoding_changed_not_words.pkl")
     model = model_pipeline(config)
 
