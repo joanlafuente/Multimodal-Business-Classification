@@ -17,26 +17,14 @@ import fasttext
 import fasttext.util
 
 data_path = "/content/dlnn-project_ia-group_15/data/"  # Path to the data folder
-anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected.pkl" # Path to the pickle file with the words spotted in each image
+anotation_path= "/content/dlnn-project_ia-group_15/anotations_translated_corrected_fixed.pkl" # Path to the pickle file with the words spotted in each image
 path_fasttext = ""  # Path to the fasttext model, if fasttext is used must be specified. The code will save the file in the path specified if it is not downloaded previously
                     # In this case is an empty string as we are using "glove-wiki-gigaword-300" embedding
 
+path_features = "" # This path has to be set to use the model wich uses prextracted features from the convnext_tiny CNN
+
 img_dir = data_path + "JPEGImages"
 txt_dir = data_path + "ImageSets/0"
-
-# data_path = "/home/xnmaster/Project/dlnn-project_ia-group_15-1/data/"
-# anotation_path= "/home/xnmaster/Project/dlnn-project_ia-group_15-1/anotations_keras.pkl"
-# img_dir = data_path + "JPEGImages"
-# txt_dir = data_path + "ImageSets/0"
-# path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
-
-data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
-anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_translated_corrected_fixed.pkl"
-img_dir = data_path + r"\JPEGImages"
-txt_dir = data_path + r"\ImageSets\0"
-path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
-
-
 
 def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", text = True):
     # Read the file with the text anotations
