@@ -115,7 +115,6 @@ def make(config, device="cuda"):
     global data_path, anotation_path, img_dir, txt_dir
     
     input_size = 224 # size of the model input images
-    augment_data = False # augment the dataset by using more than one transformed image per original image
 
     data_transforms_test = torchvision.transforms.Compose([
         torchvision.transforms.Resize(236, interpolation=torchvision.transforms.InterpolationMode.BICUBIC),
