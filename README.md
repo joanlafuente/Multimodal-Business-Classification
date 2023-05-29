@@ -55,7 +55,10 @@ Lastly, to represent the words spotted we have tested fasttext and embedding nam
 
 
 The weights of the best model with the parameters can be found here: https://drive.google.com/file/d/1QUEkEktGffTt5tlLjoePbFNv44MXXc85/view?usp=sharing
-The code of how to load the model and the diferent loaders is in test_trained_model.ipynb
+
+The code of how to load the model and the diferent loaders (train, val, test) is in test_trained_model.ipynb file. 
+
+To only load the model, the code can be seen at the predicting_imgs.ipynb
 
 
 
