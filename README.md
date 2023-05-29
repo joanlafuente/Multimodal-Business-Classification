@@ -26,6 +26,7 @@ In this repository you can find: despres canviem l’ordre si fa falta
    - predicting_img.ipynb
    - test_trained_model.ipynb
    - visualizing_our_model.ipynb
+
 - Lastly the annotations folder contains all annotations with the ocr of text that were extracted from the images.
    - annotations.pkl using easyocr
    - annotations_keras.pkl using keras
