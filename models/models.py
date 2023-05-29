@@ -193,7 +193,7 @@ class Transformer_positional_encoding_not_learned(nn.Module):
 
         # Getting the output of the transformer encoder for the CLS token and passing it through a MLP to have the dimension
         # equal to the number of clases and be able to classify
-        x = x[:, 0]
+        x = x[:, 0, :]
         x = self.fc(x)
         return x
     

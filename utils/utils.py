@@ -31,7 +31,7 @@ txt_dir = data_path + "ImageSets/0"
 # path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
 data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
-anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_keras.pkl"
+anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_translated_corrected.pkl"
 img_dir = data_path + r"\JPEGImages"
 txt_dir = data_path + r"\ImageSets\0"
 path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
@@ -76,12 +76,12 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
                     if approach == "glove": 
                         if (word.lower() in vocab): # We need to check if the word is in the vocabulary of glove
                             words[i,:] = w2v[word.lower()] # Pass the word trohugh the embedding
-                            text_mask[i] = False # Set the mask to false, to take into account this word
+                            text_mask[i] = True # Set the mask to false, to take into account this word
                             i += 1
                     
                     else:
                         words[i,:] = w2v.get_word_vector(word.lower()) # Pass the word trohugh the embedding
-                        text_mask[i] = False # Set the mask to false, to take into account this word
+                        text_mask[i] = True # Set the mask to false, to take into account this word
                         i += 1
             else:
                 break
@@ -150,7 +150,7 @@ def make(config, device="cuda"):
         test_loader = make_loader(test_dataset, config["batch_size_val_test"])
         val_loader = make_loader(val_dataset, config["batch_size_val_test"])
         
-        model = Transformer(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
+        model = Transformer_positional_encoding_not_learned(num_classes=config["classes"], depth_transformer=config["depth"], heads_transformer=config["heads"], dim_fc_transformer=config["fc_transformer"]).to(device)
         
         return model, train_loader, test_loader, val_loader
     
@@ -159,7 +159,7 @@ def make(config, device="cuda"):
         test_loader = make_loader(test_dataset, config.batch_size_val_test)
         val_loader = make_loader(val_dataset, config.batch_size_val_test)
         
-        model = Transformer(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
+        model = Transformer_positional_encoding_not_learned(num_classes=config.classes, depth_transformer=config.depth, heads_transformer=config.heads, dim_fc_transformer=config.fc_transformer, drop=config.dropout).to(device)
         
         # Initialize the parameters of the model, It is commented because it gave worse results
         # init_parameters(model) 
@@ -193,8 +193,8 @@ def load_labels_and_split(path_sets, random_state=42):
             all_y.append(key.split("_")[0])
 
     # Split the data into train, test and validation, with stratified sampling to have a similar distribution of  each class in all the sets
-    # The partition is 60% train, 20% validation and 20% test
-    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.4, stratify=all_y, random_state=random_state)
+    # The partition is 70% train, 15% validation and 15% test
+    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.3, stratify=all_y, random_state=random_state)
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
