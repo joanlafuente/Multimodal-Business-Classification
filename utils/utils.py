@@ -193,8 +193,8 @@ def load_labels_and_split(path_sets, random_state=42):
             all_y.append(key.split("_")[0])
 
     # Split the data into train, test and validation, with stratified sampling to have a similar distribution of  each class in all the sets
-    # The partition is 70% train, 15% validation and 15% test
-    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.3, stratify=all_y, random_state=random_state)
+    # The partition is 60% train, 20% validation and 20% test
+    train_img_names, test_img_names, y_train, y_test = train_test_split(all_img_names, all_y, test_size=0.4, stratify=all_y, random_state=random_state)
     test_img_names, val_img_names, y_test, y_val = train_test_split(test_img_names, y_test, test_size=0.5, stratify=y_test, random_state=random_state)
     return train_img_names, y_train, test_img_names, y_test, val_img_names, y_val
 
