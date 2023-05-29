@@ -1,6 +1,3 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-718a45dd9cf7e7f842a935f5ebbe5719a5e09af4491e668f4dbf3b35d5cca122.svg)](https://classroom.github.com/online_ide?assignment_repo_id=11110454&assignment_repo_type=AssignmentRepo)
-
-
 # Business classification
 Our objective with this project is to classify within 28 different types of businesses (“restaurant”, “bakery”, “pharmacy”, etc) using images, combining textual and visual features. 
 
@@ -85,6 +82,10 @@ Looking at where the CNN has focused we could say that the type of windows and l
 
 
 Probably if you ask a person to categorize this image it would give the same response, as it does not have any text nor context to understand it is a school. So considering that, it is a good prediction that school is the second more probable class.
+
+
+
+
 
 
 
