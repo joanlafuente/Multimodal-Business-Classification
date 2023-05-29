@@ -14,31 +14,32 @@ def train(model, train_loader, val_loader, criterion, optimizer, config):
     best_val_loss = float('inf')
     best_val_acc = 0
     counter = 0
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer) # An squeduler that reduces the learning rate if the loss doesn't improve
     for epoch in tqdm(range(config.epochs)):
         for labels, img, text, text_mask in train_loader:
             loss = train_batch(img, text, text_mask, labels, model, optimizer, criterion)
             example_ct +=  len(labels)
             batch_ct += 1
 
-            # Report metrics every 25th batch
+            # Report the metrics of a batch every 25 batches
             if ((batch_ct + 1) % 25) == 0:
                 train_log(loss, example_ct, epoch)
         
-        # Evaluate the epoch results oi the validation set
+        # Evaluate the epoch results in the validation set
         val_loss, val_acc = val(model, val_loader, criterion, epoch)
         counter += 1
 
-        # save the model if the validation accuracy is the best we've seen so far
+        # save the model if the validation loss is the lowest until now
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             torch.save(model.state_dict(), "best_model.pt")
             counter = 0
 
-        if config.patience < counter:
+        if config.patience < counter: # Early stopping criterium, if the validation loss doesn't improve for config.patience epochs, stop training
             break
-        scheduler.step(val_loss)
-    model.load_state_dict(torch.load("best_model.pt"))
+        scheduler.step(val_loss) # We give the validation loss to the scheduler so it can reduce the learning rate if the validation loss doesn't improve
+
+    model.load_state_dict(torch.load("best_model.pt")) # Load the best model, the one with a lower loss on the validation set
     return model
 
         
@@ -67,6 +68,7 @@ def train_log(loss, example_ct, epoch):
     print(f"Loss after {str(example_ct).zfill(5)} examples: {loss:.3f}")
 
 def val(model, val_loader, criterion, epoch, device="cuda"):
+    # Computes the accuracy and loss in the validation set
     model.eval()
     with torch.no_grad():
         correct, total = 0, 0
@@ -87,5 +89,5 @@ def val(model, val_loader, criterion, epoch, device="cuda"):
         return losses, correct / total
 
 def val_log(loss, accuracy, epoch):
-    # Where the magic happens
+    # Logs the results of the validation set in weights and biases
     wandb.log({"epoch": epoch, "val_loss": loss, "val_acc":accuracy})
