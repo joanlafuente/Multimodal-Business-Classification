@@ -9,7 +9,7 @@ In order to do that we have used a transformer encoder architecture.
 For this project we have used the ConText dataset. You can find this dataset at the following link: https://staff.fnwi.uva.nl/s.karaoglu/datasetWeb/Dataset.html
 
 
-To be able to run the code correctly it is needed to download the features and images zips. Once the files are downloaded extract the folders of both files. From the extracted files two particular folders will be needed, “JPEGImages” and “data” (Is inside the “Features” folder). “JPEGImages” folder with the images should be added to the “data” folder. (falta que afegeixi el ImageSets, no?) esta dins del data diria
+To be able to run the code correctly it is needed to download the features and images zips. Once the files are downloaded extract the folders of both files. From the extracted files two particular folders will be needed, “JPEGImages” and “data” (Is inside the “Features” folder). “JPEGImages” folder with the images should be added to the “data” folder. 
 
 
 If you have done that, you should be able to execute the “main.py” file and train a model, only changing the paths at the start of the “utils.py” file inside the folder “Utils”. In this file it is commented what each path should have. 
@@ -40,13 +40,12 @@ In this repository you can find: despres canviem l’ordre si fa falta
 ## Model
 Our final model is based on the one shown at: https://github.com/lluisgomez/ConTextTransformer/blob/main/ConTextTransformer_inference.ipynb 
 
-
 In this final model the main changes with respect to the model cited previously are:
-We are using a mask for the padding in the words vector. So, we do not take into account the padding in the transformer input
-We have also changed the positional encoding, in the implementation cited it was a learnable parameter of the neural network, in our implementation we are using a fixed positional encoding based on sinus and cosinus.
-We do optimize the CNN, we have made different tests and always the results doing fine tuning for the CNN were much better. In the test_trained_model.ipynb file you can see a test of a model trained without fine tuning.
-We have tested different options for the feature extractor of the images. Such us, conv_next tiny, mobile_net, efficient_net_b0,... We have decided to use conv_next tiny as it is the one that gives us best results.
-Finally, we have added a parameter to control dropout inside the transformer encoder and added this same dropout into the MLP head, in order to reduce overfitting.
+- We are using a mask for the padding in the words vector. So, we do not take into account the padding in the transformer input
+- We have also changed the positional encoding, in the implementation cited it was a learnable parameter of the neural network, in our implementation we are using a fixed positional encoding based on sinus and cosinus.
+- We do optimize the CNN, we have made different tests and always the results doing fine tuning for the CNN were much better. In the test_trained_model.ipynb file you can see a test of a model trained without fine tuning.
+. We have tested different options for the feature extractor of the images. Such us, conv_next tiny, mobile_net, efficient_net_b0,... We have decided to use conv_next tiny as it is the one that gives us best results.
+- Finally, we have added a parameter to control dropout inside the transformer encoder and added this same dropout into the MLP head, in order to reduce overfitting.
 
 
 Related to the model but not inside it are the text tokens. We have extracted them using keras-ocr and easy-ocr but we also tried other libraries like pytesseract or PyOCR. We have decided to use keras-ocr as it gives better results obtaining the text but it has a lot of problems with other libraries so, in the repository there is the code to use both. We recommend using the ones extracted by keras-ocr.
@@ -55,6 +54,8 @@ Related to the model but not inside it are the text tokens. We have extracted th
 Lastly, to represent the words spotted we have tested fasttext and embedding named “glove-wiki-gigaword-300”. The main difference is that fasttext has representation for all the words and the other does not (since it has a closed vocabulary), but in our test this last one. We think that as it does not have representation of the out of the vocabulary words it may be filtering those less important words. We have also only considered only those words of more than two letters to reduce the words that go to the transformer that do not have any particular meaning. 
 
 
+The weights of the best model with the parameters can be found here: https://drive.google.com/file/d/1QUEkEktGffTt5tlLjoePbFNv44MXXc85/view?usp=sharing
+The code of how to load the model and the diferent loaders is in test_trained_model.ipynb
 
 
 
