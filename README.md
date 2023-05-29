@@ -17,20 +17,20 @@ If you have done that, you should be able to execute the “main.py” file and 
 
 ## Repository files 
 In this repository you can find: despres canviem l’ordre si fa falta
-The main script “main.py” used to train the model
-The train.py script containing the functions to run the training loop, and to track the train and val loss and accuracy to wandb
-The test.py script with the functions to compute the accuracy in the test set
-The utils folder, which contains the utils script with the functions used to create the dataloaders preparing the images and annotations, load and split the data and initialize the model, loss and optimizer. 
-The folder containing the model. Inside the “models.py” script you can find 3 different models that were tried during this project, the main one that we use is the (buscar nom) which is explained in the next section
-Different ipynb that are useful for visualizing our model’s performance and results. This notebooks are:
-predicting_img.ipynb
-test_trained_model.ipynb
-visualizing_our_model.ipynb
-Lastly the annotations folder contains all annotations with the ocr of text that were extracted from the images.
-annotations.pkl using easyocr
-annotations_keras.pkl using keras
-annotations_corrected_translated.pkl annotations_keras after spell checker and translator
-annotations_corrected_translated.pkl like the one above but an improved version  
+- The main script “main.py” used to train the model
+- The train.py script containing the functions to run the training loop, and to track the train and val loss and accuracy to wandb
+- The test.py script with the functions to compute the accuracy in the test set
+- The utils folder, which contains the utils script with the functions used to create the dataloaders preparing the images and annotations, - load and split the data and initialize the model, loss and optimizer. 
+- The folder containing the model. Inside the “models.py” script you can find 3 different models that were tried during this project, the main one that we use is the (buscar nom) which is explained in the next section
+- Different ipynb that are useful for visualizing our model’s performance and results. This notebooks are:
+ - predicting_img.ipynb
+ - test_trained_model.ipynb
+ - visualizing_our_model.ipynb
+- Lastly the annotations folder contains all annotations with the ocr of text that were extracted from the images.
+ - annotations.pkl using easyocr
+ - annotations_keras.pkl using keras
+ - annotations_corrected_translated.pkl annotations_keras after spell checker and translator
+ - annotations_corrected_translated.pkl like the one above but an improved version  
  
 
 
@@ -66,7 +66,7 @@ An example of our models predictions in real images can be seen in the predictin
 
 After giving this image to our model
 
-
+![image](https://github.com/DCC-UAB/dlnn-project_ia-group_15/assets/28900735/84619f11-4a23-4c41-8e27-a7da109ff65c)
 
 It considers that the most likely classes are: 
 MedicalCenter 76.1%
@@ -76,7 +76,7 @@ Motel 1.1%
 
 To know what the model “looked at” to do this prediction we can visualize the gradient map in the first cnn layer.
 
-
+![image](https://github.com/DCC-UAB/dlnn-project_ia-group_15/assets/28900735/e47d8f94-7567-4d3e-bdd4-91e5cd130547)
 
 Looking at where the CNN has focused we could say that the type of windows and left wall make the model take this decision. As the second more probable class is predicting school, the correct prediction. 
 
