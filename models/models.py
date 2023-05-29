@@ -286,34 +286,25 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
         
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        # full_cnn = torchvision.models.convnext_tiny(weights="DEFAULT")
-        
-        # modules=list(full_cnn.children())[:-2]
-        # self.feature_extractor=nn.Sequential(*modules)
-        # for param in self.feature_extractor.parameters():
-        #     param.requires_grad = True
-        
-        full_ViT = ViT('B_16_imagenet1k', pretrained=True)
+        # This is the only difference with the previous model, we use ViT instead of CNN
+        weights = torchvision.models.ViT_B_16_Weights()
+        full_ViT = torchvision.models.vit_b_16(weights = weights)
         
         modules=list(full_ViT.children())[:-2]
         self.feature_extractor=nn.Sequential(*modules)
         for param in self.feature_extractor.parameters():
             param.requires_grad = True
         
-        self.dim_features_feature_extractor = 0
-        self.n_features_feature_extractor = 49 # 7x7
+        self.dim_features_feature_extractor = 768 # number of feature maps
+        self.n_features_feature_extractor = 24*24 # dimension of the feature maps flattened
         self.dim_text_features = 300 # dim text embedding vectors
-        
         
         self.dim = 360 # Dimension in which the images and text are embedded
 
         # Embed for the text features
         self.text_features_embed = nn.Linear(self.dim_text_features, self.dim)
+        self.vit_features_embed = nn.Linear(self.dim_features_feature_extractor, self.dim)
         
-        # self.cnn_features_embed = nn.Linear(self.n_features_feature_extractor, self.dim)
-        # self.vit_features_embed = nn.Linear(self.dim_features_feature_extractor, self.dim)
-        # self.ViT = ViT(image_size = 256, patch_size = 32, num_classes = 1000, dim = 1024, depth = 6, heads = 16, mlp_dim = 2048, dropout = 0.1, emb_dropout = 0.1)
-
         # Positional embedding for the image features
         self.pos_embedding = PositionalEncoder(self.dim, self.dim_features_feature_extractor + 1, self.device)
         self.cls_token = nn.Parameter(torch.randn(1, 1, self.dim))
@@ -336,7 +327,7 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
 
         image_features = self.feature_extractor(img)
         image_features = image_features.reshape(batch_size, self.n_features_feature_extractor, self.dim_features_feature_extractor).permute(0, 2, 1)
-        # image_features = self.cnn_features_embed(image_features) 
+        image_features = self.vit_features_embed(image_features)
 
         cls_tokens = self.cls_token.expand(batch_size, -1, -1)
         x = torch.cat((cls_tokens, image_features), dim=1)
@@ -348,9 +339,8 @@ class Transformer_positional_encoding_not_learned_ViT(nn.Module):
         tmp_mask = torch.zeros((img.shape[0], 1+self.dim_features_feature_extractor), dtype=torch.bool).to(self.device)
         mask = torch.cat((tmp_mask, text_mask), dim=1)
         x = self.transformer(x, src_key_padding_mask=mask)
-        # x = self.transformer(x)
 
-        x = x[:, 0]
+        x = x[:, 0, :]
         x = self.fc(x)
         return x
     

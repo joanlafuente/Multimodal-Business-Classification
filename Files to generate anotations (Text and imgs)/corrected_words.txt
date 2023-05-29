@@ -1,3 +1,5 @@
+This file contains all the words that were corrected by the script
+
 cnlema --> enema
 dregal --> regal
 memoriaa --> memorial

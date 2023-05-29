@@ -1,3 +1,6 @@
+This file contains all the words that were corrected by the script 
+and that ARE now in the vocabulary
+
 cnlema --> enema
 dregal --> regal
 memoriaa --> memorial
