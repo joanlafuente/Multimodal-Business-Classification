@@ -58,7 +58,7 @@ The weights of the best model with the parameters can be found here: https://dri
 
 The code of how to load the model and the diferent loaders (train, val, test) is in test_trained_model.ipynb file. 
 
-To only load the model, the code can be seen at the predicting_imgs.ipynb
+To only load the model, the code can be seen at the predicting_imgs.ipynb file.
 
 
 
