@@ -58,6 +58,6 @@ if __name__ == "__main__":
         architecture="Transformer",
         cnn = "Convext_tiny",
         weights = "DEFAULT",
-        name_model="positional_encoding_changed_not_words.pkl")
+        name_model="positional_encoding_changed.pkl")
     model = model_pipeline(config)
 
