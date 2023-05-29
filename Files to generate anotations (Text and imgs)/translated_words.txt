@@ -1,3 +1,5 @@
+This file contains all the words that were translated by the script
+
 siwnose --> Zionose
 pachirisuss --> onrisiss
 riatla --> Riatla
@@ -1992,7 +1994,7 @@ mnporistun --> mnoro
 uniroval --> Unwashed
 hanbun --> half
 gcodncr --> Codncr
-pratzen --> Pratç
+pratzen --> Pratï¿½
 pirzera --> pier
 9a1961 --> 9 A 1961
 pereetitl --> family
@@ -2148,7 +2150,7 @@ cofeehouse --> coffee house
 nunshega --> nunshe
 elertrones --> Elertrons
 fharmala --> Urmanla
-ashllann --> AshLè
+ashllann --> AshLï¿½
 rostbud --> Rostbud
 acanatie --> Acanation
 tieatirntatre --> Tiatirntatre

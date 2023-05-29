@@ -1,3 +1,6 @@
+This file contains all the words that were translated by the script and 
+and that ARE now in the vocabulary
+
 haicuts --> haircuts
 nobohont --> and
 mitka --> mark
