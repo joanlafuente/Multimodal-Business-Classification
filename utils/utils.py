@@ -31,14 +31,14 @@ txt_dir = data_path + "ImageSets/0"
 # path_fasttext = "/home/xnmaster/Project/cc.en.300.bin"
 
 data_path = r"C:\Users\Joan\Desktop\Deep learning project 2\features\data"
-anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_translated_corrected.pkl"
+anotation_path= r"C:\Users\Joan\Desktop\Deep learning project 2\dlnn-project_ia-group_15\anotations_translated_corrected_fixed.pkl"
 img_dir = data_path + r"\JPEGImages"
 txt_dir = data_path + r"\ImageSets\0"
 path_features = r"C:\Users\Joan\Desktop\Deep_Learning_project\dlnn-project_ia-group_15\features_extracted.pkl"
 
 
 
-def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove"):
+def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", text = True):
     # Read the file with the text anotations
     anotations = pd.read_pickle(anotation_path)
 
@@ -64,6 +64,8 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
         # Read the list of text anotation of the image
         words_OCR = anotations[anotations.index == img_name].values[0][0]
 
+        mask_value = not text # If text is false, we will use the mask to ignore the text, in the other cases we will use it to ignore the padding
+
         # For each image we create a matrix of dim (max_n_words, dim_w2v) with the embeddings of the words
         # and a mask to avoid the padding later
         i = 0
@@ -76,12 +78,12 @@ def create_anotations(dim_w2v = 300, max_n_words = 40, anotation_path = anotatio
                     if approach == "glove": 
                         if (word.lower() in vocab): # We need to check if the word is in the vocabulary of glove
                             words[i,:] = w2v[word.lower()] # Pass the word trohugh the embedding
-                            text_mask[i] = True # Set the mask to false, to take into account this word
+                            text_mask[i] = mask_value # Set the mask to false, to take into account this word
                             i += 1
                     
                     else:
                         words[i,:] = w2v.get_word_vector(word.lower()) # Pass the word trohugh the embedding
-                        text_mask[i] = True # Set the mask to false, to take into account this word
+                        text_mask[i] = mask_value # Set the mask to false, to take into account this word
                         i += 1
             else:
                 break
@@ -109,7 +111,7 @@ def init_parameters(model):
             if "bias" in name:
                 nn.init.ones_(w)
 
-def make(config, device="cuda"):
+def make(config, device="cuda", text=True):
     # Prepare data, create model, optimizer and criterion from config.
 
     global data_path, anotation_path, img_dir, txt_dir
@@ -134,13 +136,13 @@ def make(config, device="cuda"):
     
     # get the anotations (text) of images
     print("Creating anotations...")
-    anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove")
+    anotations = create_anotations(dim_w2v = 300, max_n_words = 50, anotation_path = anotation_path, path_fasttext = path_fasttext, approach = "glove", text=text)
 
     # Load the labels of the images and split them into train, test and validation
     train_img_names, y_train, test_img_names, y_test, val_img_names, y_val = load_labels_and_split(txt_dir)
     
     # Creating the datasets and the loaders for the train, test and validation
-    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train, augment=augment_data)
+    train_dataset = Dataset_ConText(img_dir, train_img_names, y_train, anotations, transform=data_transforms_train)
     test_dataset = Dataset_ConText(img_dir, test_img_names, y_test, anotations, transform=data_transforms_test)
     val_dataset = Dataset_ConText(img_dir, val_img_names, y_val, anotations, transform=data_transforms_test)
 
