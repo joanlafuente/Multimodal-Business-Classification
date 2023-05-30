@@ -61,7 +61,7 @@ The code of how to load the model and the diferent loaders (train, val, test) is
 
 To only load the model, the code can be seen at the predicting_imgs.ipynb file.
 
-Finally, to be able to reproduce our results the model should be trained with the anotation file anotations_keras.pkl, and the parameters set in the main.py and utils.py files. During testing we have used annotations_corrected_translated_fixed.pkl, that are the same anotations but passed trough a spelling corrector and translated to english, this was done with "translate_anotations.py" file.
+Finally, to be able to reproduce our results the model should be trained with the anotation file anotations_keras.pkl, and the parameters set in the main.py and utils.py files. During testing we have used annotations_corrected_translated_fixed.pkl, that are the same anotations but passed through a spelling corrector and translated to english, this was done with "translate_anotations.py" file.
 
 
 
