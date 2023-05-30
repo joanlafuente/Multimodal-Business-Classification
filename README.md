@@ -16,12 +16,13 @@ If you have done that, you should be able to execute the “main.py” file and 
 
 
 ## Repository files 
-In this repository you can find: despres canviem l’ordre si fa falta
+In this repository you can find: 
 - The main script “main.py” used to train the model
 - The train.py script containing the functions to run the training loop, and to track the train and val loss and accuracy to wandb
 - The test.py script with the functions to compute the accuracy in the test set
 - The utils folder, which contains the utils script with the functions used to create the dataloaders preparing the images and annotations, - load and split the data and initialize the model, loss and optimizer. 
-- The folder containing the model. Inside the “models.py” script you can find 3 different models that were tried during this project, the main one that we use is the (buscar nom) which is explained in the next section
+- The models folder, which contains "models.py". Inside the “models.py” script you can find 3 different models that were tried during this project, the main one that we use is the "Transformer_positional_encoding_not_learned" which is explained in the next section
+- The folder files to generate anotations, conatains diferent files that have been used during the training of the models to extract words of the images, correct them (translate_anotations.py) or extract visual features from the images.
 - Different ipynb that are useful for visualizing our model’s performance and results. This notebooks are:
    - predicting_img.ipynb
    - test_trained_model.ipynb
@@ -31,7 +32,7 @@ In this repository you can find: despres canviem l’ordre si fa falta
    - annotations.pkl using easyocr
    - annotations_keras.pkl using keras
    - annotations_corrected_translated.pkl annotations_keras after spell checker and translator
-   - annotations_corrected_translated.pkl like the one above but an improved version  
+   - annotations_corrected_translated_fixed.pkl like the one above but an improved version  
  
 
 
@@ -53,13 +54,14 @@ Related to the model but not inside it are the text tokens. We have extracted th
 
 Lastly, to represent the words spotted we have tested fasttext and embedding named “glove-wiki-gigaword-300”. The main difference is that fasttext has representation for all the words and the other does not (since it has a closed vocabulary), but in our test this last one. We think that as it does not have representation of the out of the vocabulary words it may be filtering those less important words. We have also only considered only those words of more than two letters to reduce the words that go to the transformer that do not have any particular meaning. 
 
-
+## Model weights
 The weights of the best model with the parameters can be found here: https://drive.google.com/file/d/1QUEkEktGffTt5tlLjoePbFNv44MXXc85/view?usp=sharing
 
 The code of how to load the model and the diferent loaders (train, val, test) is in test_trained_model.ipynb file. 
 
 To only load the model, the code can be seen at the predicting_imgs.ipynb file.
 
+Finally, to be able to reproduce our results the model should be trained with the anotation file anotations_keras.pkl, and the parameters set in the main.py and utils.py files. During testing we have used annotations_corrected_translated_fixed.pkl, that are the same anotations but passed trough a spelling corrector and translated to english, this was done with "translate_anotations.py" file.
 
 
 
