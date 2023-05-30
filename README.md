@@ -52,7 +52,7 @@ In this final model the main changes with respect to the model cited previously 
 Related to the model but not inside it are the text tokens. We have extracted them using keras-ocr and easy-ocr but we also tried other libraries like pytesseract or PyOCR. We have decided to use keras-ocr as it gives better results obtaining the text but it has a lot of problems with other libraries so, in the repository there is the code to use both. We recommend using the ones extracted by keras-ocr.
 
 
-Lastly, to represent the words spotted we have tested fasttext and embedding named “glove-wiki-gigaword-300”. The main difference is that fasttext has representation for all the words and the other does not (since it has a closed vocabulary), but in our test this last one. We think that as it does not have representation of the out of the vocabulary words it may be filtering those less important words. We have also only considered only those words of more than two letters to reduce the words that go to the transformer that do not have any particular meaning. 
+Lastly, to represent the words spotted we have tested fasttext and a word2vec embedding named “glove-wiki-gigaword-300”. The main difference is that fasttext has representation for all the words which word2vec does not (since it has a closed vocabulary), but in our tests this last one has worked better. For this reason we have decide to use the word2vec embedding. We think that as it does not have representation of the out of the vocabulary words it may be filtering those words that are mostly noise. We have also only considered those words of more than two letters to reduce the words that go to the transformer that do not have any particular meaning. 
 
 ## Model weights
 The weights of the best model with the parameters can be found here: https://drive.google.com/file/d/1QUEkEktGffTt5tlLjoePbFNv44MXXc85/view?usp=sharing
@@ -98,6 +98,7 @@ Probably if you ask a person to categorize this image it would give the same res
 
 ## Contributors
 Joan Lafuente Baeza, joan.lafuente@autonoma.cat
+
 Maria Pilligua Costa, maria.pilligua@autonoma.cat
 
 
