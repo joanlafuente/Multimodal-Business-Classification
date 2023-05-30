@@ -83,9 +83,11 @@ To know what the model “looked at” to do this prediction we can visualize th
 
 Looking at where the CNN has focused we could say that the type of windows and left wall make the model take this decision. As the second more probable class is predicting school, the correct prediction. 
 
-
 Probably if you ask a person to categorize this image it would give the same response, as it does not have any text nor context to understand it is a school. So considering that, it is a good prediction that school is the second more probable class.
 
+## Conclusions
+
+To conclude, we think that our model has learned to classify correctly within most of the diferent classes in the dataset and generalize correctly, as it is capable to classify well images that are out of the dataset. This can be seen in test_trained_model.ipynb (Evaluation of the model) and predicting_imgs.ipynb (Predictions for images out of the dataset) files.
 
 
 
