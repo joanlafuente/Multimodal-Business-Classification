@@ -1,3 +1,4 @@
+[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-24ddc0f5d75046c5622901739e7c5dd533143b0c8e959d652212380cedb1ea36.svg)](https://classroom.github.com/a/wT71nrpQ)
 # Business classification
 Our objective with this project is to classify within 28 different types of businesses (“restaurant”, “bakery”, “pharmacy”, etc) using images, combining textual and visual features. 
 
@@ -52,7 +53,7 @@ In this final model the main changes with respect to the model cited previously 
 Related to the model but not inside it are the text tokens. We have extracted them using keras-ocr and easy-ocr but we also tried other libraries like pytesseract or PyOCR. We have decided to use keras-ocr as it gives better results obtaining the text but it has a lot of problems with other libraries so, in the repository there is the code to use both. We recommend using the ones extracted by keras-ocr.
 
 
-Lastly, to represent the words spotted we have tested fasttext and embedding named “glove-wiki-gigaword-300”. The main difference is that fasttext has representation for all the words and the other does not (since it has a closed vocabulary), but in our test this last one. We think that as it does not have representation of the out of the vocabulary words it may be filtering those less important words. We have also only considered only those words of more than two letters to reduce the words that go to the transformer that do not have any particular meaning. 
+Lastly, to represent the words spotted we have tested fasttext and a word2vec embedding named “glove-wiki-gigaword-300”. The main difference is that fasttext has representation for all the words which word2vec does not (since it has a closed vocabulary), but in our tests this last one has worked better. For this reason we have decide to use the word2vec embedding. We think that as it does not have representation of the out of the vocabulary words it may be filtering those words that are mostly noise. We have also only considered those words of more than two letters to reduce the words that go to the transformer that do not have any particular meaning. 
 
 ## Model weights
 The weights of the best model with the parameters can be found here: https://drive.google.com/file/d/1QUEkEktGffTt5tlLjoePbFNv44MXXc85/view?usp=sharing
@@ -61,11 +62,7 @@ The code of how to load the model and the diferent loaders (train, val, test) is
 
 To only load the model, the code can be seen at the predicting_imgs.ipynb file.
 
-Finally, to be able to reproduce our results the model should be trained with the anotation file anotations_keras.pkl, and the parameters set in the main.py and utils.py files. During testing we have used annotations_corrected_translated_fixed.pkl, that are the same anotations but passed through a spelling corrector and translated to english, this was done with "translate_anotations.py" file.
-
-
-
-
+Finally, to be able to reproduce our results the model should be trained with the anotation file anotations_keras.pkl, and the parameters that are set in the main.py and utils.py files. During testing we have used annotations_corrected_translated_fixed.pkl, that are the same anotations but passed through a spelling corrector and translated to english, this was done with "translate_anotations.py" file.
 
 ## Trying our model
 An example of our models predictions in real images can be seen in the predicting_img notebook, here is an snippet of what can be seen in that notebook: 
@@ -87,9 +84,11 @@ To know what the model “looked at” to do this prediction we can visualize th
 
 Looking at where the CNN has focused we could say that the type of windows and left wall make the model take this decision. As the second more probable class is predicting school, the correct prediction. 
 
-
 Probably if you ask a person to categorize this image it would give the same response, as it does not have any text nor context to understand it is a school. So considering that, it is a good prediction that school is the second more probable class.
 
+## Conclusions
+
+To conclude, we think that our model has learned to classify correctly in most of the diferent classes in the dataset and generalize correctly, as it is capable to classify well images that are out of the dataset. This can be seen in test_trained_model.ipynb (Evaluation of the model) and predicting_imgs.ipynb (Predictions for images out of the dataset) files.
 
 
 
@@ -102,6 +101,7 @@ Probably if you ask a person to categorize this image it would give the same res
 
 ## Contributors
 Joan Lafuente Baeza, joan.lafuente@autonoma.cat
+
 Maria Pilligua Costa, maria.pilligua@autonoma.cat
 
 
