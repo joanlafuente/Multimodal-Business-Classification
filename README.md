@@ -104,8 +104,8 @@ Joan Lafuente Baeza, joan.lafuente@autonoma.cat
 Maria Pilligua Costa, maria.pilligua@autonoma.cat
 
 
-Xarxes Neuronals i Aprenentatge Profund
-Grau de Artificial Intelligence,
+Neural Networks and Deep Learning (AI) 
+Bachelor's Degree in Artificial Intelligence,
 UAB, 2023
 
 
